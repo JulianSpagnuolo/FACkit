@@ -1,11 +1,14 @@
 Package: FACkit
 Type: Package
-Title: What the Package Does (Title Case)
+Title: FACS Analysis Tool Kit
 Version: 0.1.0
-Author: Who wrote it
-Maintainer: The package maintainer <yourself@somewhere.net>
+Author: Julian Spagnuolo
+Maintainer: Julian Spagnuolo <julianspagnuolo@gmail.com>
 Description: More about what it does (maybe more than one line)
     Use four spaces when indenting paragraphs within the Description.
-License: What license is it under?
+License: GNU version 3.0
 Encoding: UTF-8
 LazyData: true
+Imports: KernSmooth, EMMIXskew
+Recommends: ggplot, ggsci, ggalt
+Depends: KernSmooth

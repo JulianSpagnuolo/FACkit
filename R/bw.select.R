@@ -2,9 +2,6 @@ bw.select <- function (x, scalest = "mad", level = 2L, kernel = "normal",
           canonical = FALSE, gridsize = 401L, range.x = range(x),
           truncate = TRUE)
 {
-  #change requirements to namespace
-  require(KernSmooth)
-
   dmode <- function(x, ...) {
     den <- KernSmooth::bkde(x,kernel="normal", bandwidth=KernSmooth::dpik(x, gridsize=gridsize), gridsize=gridsize)
     ( den$x[den$y==max(den$y)] )
