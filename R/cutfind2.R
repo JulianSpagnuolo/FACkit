@@ -1,21 +1,41 @@
-cutfind2 <- function(markers, x, DensityThreshold=NULL, gridsize=14000, max.restarts=1, epsilon=1e-9, maxit=8000, seed=42, auto=TRUE, metric="AIC") {
+cutfind2 <- function(x, markers, npeaks=NULL, DensityThreshold=NULL, gridsize=14000, max.restarts=1, epsilon=1e-9, maxit=8000, seed=42, auto=TRUE, metric="AIC") {
 
+#'  @author Julian Spagnuolo
+#'
+#'  @param x data.frame or named matrix containing raw data for which you wish to identify cutoff values for subsequent transformation.
+#'  @param markers a vector containing the columns in x that you wish to parse through cutfind2
+#'  @param npeaks a named vector of integers indicating the number of peaks in each distribution that you wish to identify. This can contain NULL values. See details
+#'  @param DensityThreshold Named numeric vector indicating the density above which peaks will be identified. Set this below the smallest peak in the density distribution of your data.
+#'  @param gridsize gridsize used in the density estimation steps - this needn't be changed.
+#'  @param epsilon accuracy of mixture modelling step (only used if npeaks for marker is > 1)
+#'  @param maxit maximum iterations used by mixture modelling step (only used if npeaks for marker is > 1). If this step fails, it will restart (number of restarts set by max.restarts) and add 2000 iterations to maxit.
+#'  @param max.restarts maximum restarts allowed in the mixture modelling steps (increases maxit by 2000 each restart). The function will use the parameters returned by the mixture modelling step to re-seed the algorithm.
+#'  @param seed This is the system seed used by the mixture modelling step, just to increase the reproducibility of the function
+#'  @param auto Logical - if TRUE the function will search for the optimal number of components (distributions) to fit in the mixture model by searching a range of +/- 2 peaks from the number of peaks identified.
+#'  @param metric vector - the metric used to choose the optimum mixture model to fit to the data choose one of "BIC", "AIC", or "ICL"
+#'
 
-  if(length(DensityThreshold) == 1){
+  if(is.null(npeaks))
+  {
+    npeaks <- rep(NULL, length(markers))
+    names(npeaks) <- markers
+  }
+
+  # Set universal Density Threshold
+  if(length(DensityThreshold) == 1)
+  {
     DensityThreshold <- rep(DensityThreshold, length(markers))
     names(DensityThreshold) <- markers
   }
 
-  if(is.null(DensityThreshold)){
+  if(is.null(DensityThreshold))
+  {
     cat("Provide a vector of Density Thresholds for each marker (or pick a point below the lowest peak you wish to identify)")
     break()
   }
 
-  if(length(DensityThreshold) == length(markers)) {
-    names(DensityThreshold) <- markers
-  }
-
-  if(length(DensityThreshold) != length(markers)) {
+  if(length(DensityThreshold) != length(markers))
+  {
     cat("Missing a Density Threshold in your vector")
     break()
   }
@@ -23,25 +43,45 @@ cutfind2 <- function(markers, x, DensityThreshold=NULL, gridsize=14000, max.rest
   cutoffs <- vector(mode="list", length=length(markers))
   names(cutoffs) <- markers
   itmax <- maxit
-  for(i in markers){
+  for(i in markers)
+  {
     cat("\nProcessing", i)
-    peaks <- peaksNvalleys(data=x[,i], minDensityThreshold=DensityThreshold[i], gridsize=gridsize, fudge=0.1)
-    if(length(peaks$peaks) < 1){
+
+    fudge <- 0
+    peaks <- peaksNvalleys(data=x[,i], minDensityThreshold=DensityThreshold[i], gridsize=gridsize, fudge=fudge)
+    if(length(peaks$peaks) < 1)
+    {
       cat("\n No peaks found for ", i, "!!! \nTry changing gridsize or minDensityThreshold parameters")
     }
-    if(length(peaks$peaks) == 1 ){
+    ## Incrementally increase smoothing of the distribution to find expected number of peaks
+    if(!is.null(npeaks[i]))
+    {
+      while(length(peaks$peaks) != (npeaks[i]))
+      {
+        fudge <- fudge + 0.1
+        peaks <- peaksNvalleys(data=x[,i], minDensityThreshold=DensityThreshold[i], gridsize=gridsize, fudge=fudge)
+      }
+    }
+
+    # Find the summary stats for cutoff values
+
+    ## For unimodal distributions find mode-centered mad.
+    if(length(peaks$peaks) == 1 )
+    {
       cat("\n Found", length(peaks$peaks), " peak in ", i, " distribution")
-      cutoffs[[i]]$right  <- dmode(x[,i], gridsize=gridsize)+2*mad(x=x[,i],center=dmode(x[,i], gridsize=gridsize))
-      cutoffs[[i]]$left  <- dmode(x[,i], gridsize=gridsize)-2*mad(x=x[,i],center=dmode(x[,i], gridsize=gridsize))
+      cutoffs[[i]]$right  <- dmode(x[,i], gridsize=gridsize)+2*mad(x=x[,i],center=dmode(x[,i], gridsize=gridsize, fudge=fudge))
+      cutoffs[[i]]$left  <- dmode(x[,i], gridsize=gridsize)-2*mad(x=x[,i],center=dmode(x[,i], gridsize=gridsize, fudge=fudge))
       cutoffs[[i]]$peak <-  peaks$dens$x[peaks$peaks]
       cutoffs[[i]]$sigma <- mad(x=x[,i],center=dmode(x[,i], gridsize=gridsize))
       cat("\n", i, " done!")
     }
-    if(length(peaks$peaks) > 1){
+    if(length(peaks$peaks) > 1)
+    {
       cat("\n Found ", length(peaks$peaks), " peaks in ",i, " distribution" )
       cat("\n Mixture modelling ", i, " marker \n")
       k <- length(peaks$peaks)
 
+      ## Fit a miture model to the data
       # create loop to make sure the Modelling function converges
       error <- 1
       restarts <- 1
@@ -78,19 +118,34 @@ cutfind2 <- function(markers, x, DensityThreshold=NULL, gridsize=14000, max.rest
       }
 
       mixmod <- EMMIXskew::EmSkew(dat=as.matrix(x[,i]), g=k, itmax=itmax, epsilon=epsilon, distr="mst", debug=F)
-      #while(error == 1 & restarts <= max.restarts)
-      #{
-      #  set.seed(42)
-      #  mixmod <- EmSkew(dat=as.matrix(x[,i]), g=k, itmax=itmax, epsilon=epsilon, distr="mst", debug=F)
-      #  error <- mixmod$error
-      #  if(mixmod$error == 1)
-      #  {
-      #    itmax <- itmax + 2000
-      #    restarts <- restarts + 1
-      #    warning("Model failed to converge, increasing max allowed iterations and restarting\n", immediate.=TRUE)
-      #  }
-      #}
-      ## Fit a miture model to the data
+
+      # Get restart params if modelling failed to converge in maxit
+      if(mixmod$error == 1)
+      {
+        pro <- mixmod$pro
+        mu <- mixmod$mu
+        sigma <- mixmod$sigma
+        dof <- mixmod$dof
+        delta <- mixmod$delta
+      }
+      # Restart mixture modelling until it converges
+      while(error == 1 & restarts <= max.restarts)
+      {
+        set.seed(42)
+        mixmod <- EMMIXskew::EmSkew(dat=as.matrix(x[,i]), g=k, itmax=itmax, epsilon=epsilon, distr="mst", debug=F, init=list(pro, mu, sigma, dof, delta))
+        error <- mixmod$error
+        if(mixmod$error == 1)
+        {
+          itmax <- itmax + 2000
+          restarts <- restarts + 1
+          pro <- mixmod$pro
+          mu <- mixmod$mu
+          sigma <- mixmod$sigma
+          dof <- mixmod$dof
+          delta <- mixmod$delta
+          warning("Model failed to converge, increasing max allowed iterations and restarting\n", immediate.=TRUE)
+        }
+      }
       if(mixmod$error == 0)
       {
         cat("Success! Modeling ", i," as ", length(mixmod$modpts), " skew normal distributions within ",itmax, " iterations\n")
