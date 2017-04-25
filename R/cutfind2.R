@@ -157,6 +157,7 @@ cutfind2 <- function(x, markers, npeaks=NULL, DensityThreshold=NULL, gridsize=14
       maxit <- itmax + 2000
       while(mixmod$error == 1 & restarts <= max.restarts)
       {
+        cat(" Model failed to converge, restarting with params from initial run\n")
         restart <- restart + 1
         set.seed(42)
         mixmod <- EMMIXskew::EmSkew(dat=as.matrix(x[,i]), g=k, itmax=maxit, epsilon=epsilon, distr="mst", debug=F, init=list(pro, mu, sigma, dof, delta))
