@@ -4,7 +4,7 @@ cutfind2 <- function(x, markers, npeaks=NULL, DensityThreshold=NULL, gridsize=14
 #'
 #'  @param x data.frame or named matrix containing raw data for which you wish to identify cutoff values for subsequent transformation.
 #'  @param markers a vector containing the columns in x that you wish to parse through cutfind2
-#'  @param npeaks a named vector of integers indicating the number of peaks in each distribution that you wish to identify. This can contain NULL values. See details
+#'  @param npeaks a named vector of integers indicating the number of peaks in each distribution that you wish to identify. This can contain NA values. See details
 #'  @param DensityThreshold Named numeric vector indicating the density above which peaks will be identified. Set this below the smallest peak in the density distribution of your data.
 #'  @param gridsize gridsize used in the density estimation steps - this needn't be changed.
 #'  @param epsilon accuracy of mixture modelling step (only used if npeaks for marker is > 1)
@@ -17,7 +17,8 @@ cutfind2 <- function(x, markers, npeaks=NULL, DensityThreshold=NULL, gridsize=14
 
   if(is.null(npeaks))
   {
-    npeaks <- rep(NULL, length(markers))
+    npeaks <- vector(length=length(markers))
+    npeaks <- rep(NA, length(markers))
     names(npeaks) <- markers
   }
 
@@ -46,21 +47,28 @@ cutfind2 <- function(x, markers, npeaks=NULL, DensityThreshold=NULL, gridsize=14
   for(i in markers)
   {
     cat("\nProcessing", i)
+    cat("\nLooking for ", as.integer(npeaks[i])," peaks")
 
     fudge <- 0
     peaks <- peaksNvalleys(data=x[,i], minDensityThreshold=DensityThreshold[i], gridsize=gridsize, fudge=fudge)
+
     if(length(peaks$peaks) < 1)
     {
       cat("\n No peaks found for ", i, "!!! \nTry changing gridsize or minDensityThreshold parameters")
     }
     ## Incrementally increase smoothing of the distribution to find expected number of peaks
-    if(!is.null(npeaks[i]))
+    if(!is.na(npeaks[i]))
     {
-      while(length(peaks$peaks) != (npeaks[i]))
+      if(as.integer(npeaks[i]) != length(peaks$peaks))
+      {
+        cat("\nFudging bandwidth parameter to increase smoothing")
+      }
+      while(as.integer(npeaks[i]) != length(peaks$peaks))
       {
         fudge <- fudge + 0.1
         peaks <- peaksNvalleys(data=x[,i], minDensityThreshold=DensityThreshold[i], gridsize=gridsize, fudge=fudge)
       }
+      cat("\nFudge Factor:",fudge)
     }
 
     # Find the summary stats for cutoff values
@@ -69,10 +77,10 @@ cutfind2 <- function(x, markers, npeaks=NULL, DensityThreshold=NULL, gridsize=14
     if(length(peaks$peaks) == 1 )
     {
       cat("\n Found", length(peaks$peaks), " peak in ", i, " distribution")
-      cutoffs[[i]]$right  <- dmode(x[,i], gridsize=gridsize)+2*mad(x=x[,i],center=dmode(x[,i], gridsize=gridsize, fudge=fudge))
-      cutoffs[[i]]$left  <- dmode(x[,i], gridsize=gridsize)-2*mad(x=x[,i],center=dmode(x[,i], gridsize=gridsize, fudge=fudge))
+      cutoffs[[i]]$right  <- dmode(x[,i], gridsize=gridsize, fudge=fudge, bw.method="bw.select")+2*mad(x=x[,i],center=dmode(x[,i], gridsize=gridsize, fudge=fudge, bw.method="bw.select"))
+      cutoffs[[i]]$left  <- dmode(x[,i], gridsize=gridsize, fudge=fudge, bw.method="bw.select")-2*mad(x=x[,i],center=dmode(x[,i], gridsize=gridsize, fudge=fudge, bw.method="bw.select"))
       cutoffs[[i]]$peak <-  peaks$dens$x[peaks$peaks]
-      cutoffs[[i]]$sigma <- mad(x=x[,i],center=dmode(x[,i], gridsize=gridsize))
+      cutoffs[[i]]$sigma <- mad(x=x[,i],center=dmode(x[,i], gridsize=gridsize, fudge=fudge, bw.method="bw.select"))
       cat("\n", i, " done!")
     }
     if(length(peaks$peaks) > 1)
@@ -92,20 +100,10 @@ cutfind2 <- function(x, markers, npeaks=NULL, DensityThreshold=NULL, gridsize=14
       if(auto == TRUE)
       {
         cat("Finding optimum number of components using ", metric, "\n")
-        if(k > 2)
-        {
-          comps <- data.frame(row.names=seq(from=k-2, to=k+2, by=1),
-                              BIC=vector(length=length(seq(from=k-2, to=k+2, by=1))),
-                              AIC=vector(length=length(seq(from=k-2, to=k+2, by=1))),
-                              ICL=vector(length=length(seq(from=k-2, to=k+2, by=1))))
-        }
-        if(k == 2)
-        {
-          comps <- data.frame(row.names=seq(from=k-1, to=k+2, by=1),
-                              BIC=vector(length=length(seq(from=k-1, to=k+2, by=1))),
-                              AIC=vector(length=length(seq(from=k-1, to=k+2, by=1))),
-                              ICL=vector(length=length(seq(from=k-1, to=k+2, by=1))))
-        }
+        comps <- data.frame(row.names=seq(from=k-1, to=k+1, by=1),
+                            BIC=vector(length=length(seq(from=k-1, to=k+1, by=1))),
+                            AIC=vector(length=length(seq(from=k-1, to=k+1, by=1))),
+                            ICL=vector(length=length(seq(from=k-1, to=k+1, by=1))))
         for(l in 1:length(row.names(comps)))
         {
           mod <- EMMIXskew::EmSkew(dat=as.matrix(x[,i]), g=as.integer(row.names(comps)[l]), itmax=500, debug=F, distr="mst", epsilon=1e-5)
@@ -113,6 +111,7 @@ cutfind2 <- function(x, markers, npeaks=NULL, DensityThreshold=NULL, gridsize=14
           comps[l,]$AIC <- mod$aic
           comps[l,]$ICL <- mod$ICL
         }
+
         k <- as.integer(row.names(comps[which(comps[,metric] == min(comps[,metric])),]))
         cat("Optimum number of components is ", row.names(comps[which(comps[,metric] == min(comps[,metric])),]),"\n")
       }
@@ -134,15 +133,16 @@ cutfind2 <- function(x, markers, npeaks=NULL, DensityThreshold=NULL, gridsize=14
         set.seed(42)
         mixmod <- EMMIXskew::EmSkew(dat=as.matrix(x[,i]), g=k, itmax=itmax, epsilon=epsilon, distr="mst", debug=F, init=list(pro, mu, sigma, dof, delta))
         error <- mixmod$error
+        pro <- mixmod$pro
+        mu <- mixmod$mu
+        sigma <- mixmod$sigma
+        dof <- mixmod$dof
+        delta <- mixmod$delta
+
         if(mixmod$error == 1)
         {
           itmax <- itmax + 2000
           restarts <- restarts + 1
-          pro <- mixmod$pro
-          mu <- mixmod$mu
-          sigma <- mixmod$sigma
-          dof <- mixmod$dof
-          delta <- mixmod$delta
           warning("Model failed to converge, increasing max allowed iterations and restarting\n", immediate.=TRUE)
         }
       }

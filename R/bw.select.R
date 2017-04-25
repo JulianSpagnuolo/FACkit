@@ -21,7 +21,7 @@ bw.select <- function (x, scalest = "mad", level = 2L, kernel = "normal",
   scalest <- switch(scalest, stdev = sqrt(var(x)),
                     iqr = (quantile(x, 3/4) - quantile(x, 1/4))/1.349,
                     minim = min((quantile(x, 3/4) - quantile(x, 1/4))/1.349, sqrt(var(x))),
-                    mad = mad(x, center=dmode(x, bandwidth=KernSmooth::dpik(x, gridsize=gridsize))))
+                    mad = mad(x, center=dmode(x, bw.method="dpik", gridsize = gridsize)))
   if (scalest == 0)
     stop("scale estimate is zero for input data")
   sx <- (x - mean(x))/scalest
