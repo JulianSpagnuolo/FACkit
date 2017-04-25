@@ -151,7 +151,11 @@ cutfind2 <- function(x, markers, npeaks=NULL, DensityThreshold=NULL, gridsize=14
         dof <- mixmod$dof
         delta <- mixmod$delta
       }
+<<<<<<< HEAD
 
+=======
+      return(mixmod)
+>>>>>>> refs/remotes/origin/development
       # Restart mixture modelling until it converges
       restarts <- 0
       maxit <- itmax + 2000
