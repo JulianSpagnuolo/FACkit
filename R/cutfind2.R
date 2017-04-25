@@ -1,5 +1,6 @@
 cutfind2 <- function(x, markers, npeaks=NULL, DensityThreshold=NULL, gridsize=14000, max.restarts=1, epsilon=1e-9, maxit=8000, seed=42, auto=TRUE, metric="AIC") {
 
+#'  @title Cutfind
 #'  @author Julian Spagnuolo
 #'
 #'  @param x data.frame or named matrix containing raw data for which you wish to identify cutoff values for subsequent transformation.
