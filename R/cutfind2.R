@@ -139,7 +139,7 @@ cutfind2 <- function(x, markers, npeaks=NULL, DensityThreshold=NULL, gridsize=14
         #  k <- as.integer(row.names(comps[which(comps[,metric] == max(comps[,metric])),]))
         #}
       }
-
+      set.seed(42)
       mixmod <- EMMIXskew::EmSkew(dat=as.matrix(x[,i]), g=k, itmax=itmax, epsilon=epsilon, distr="mst", debug=F)
 
       # Get restart params if modelling failed to converge in maxit
@@ -151,12 +151,16 @@ cutfind2 <- function(x, markers, npeaks=NULL, DensityThreshold=NULL, gridsize=14
         dof <- mixmod$dof
         delta <- mixmod$delta
       }
+      return(mixmod)
       # Restart mixture modelling until it converges
-      while(error == 1 & restarts <= max.restarts)
+      restarts <- 0
+      maxit <- itmax + 2000
+      while(mixmod$error == 1 & restarts <= max.restarts)
       {
+        restart <- restart + 1
         set.seed(42)
-        mixmod <- EMMIXskew::EmSkew(dat=as.matrix(x[,i]), g=k, itmax=itmax, epsilon=epsilon, distr="mst", debug=F, init=list(pro, mu, sigma, dof, delta))
-        error <- mixmod$error
+        mixmod <- EMMIXskew::EmSkew(dat=as.matrix(x[,i]), g=k, itmax=maxit, epsilon=epsilon, distr="mst", debug=F, init=list(pro, mu, sigma, dof, delta))
+        # get restart params
         pro <- mixmod$pro
         mu <- mixmod$mu
         sigma <- mixmod$sigma
@@ -165,9 +169,8 @@ cutfind2 <- function(x, markers, npeaks=NULL, DensityThreshold=NULL, gridsize=14
 
         if(mixmod$error == 1)
         {
-          itmax <- itmax + 2000
-          restarts <- restarts + 1
-          warning("Model failed to converge, increasing max allowed iterations and restarting\n", immediate.=TRUE)
+          maxit <- maxit + 2000
+          cat(" Model failed to converge, increasing max allowed iterations and restarting\n")
         }
       }
       if(mixmod$error == 0)
