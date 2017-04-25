@@ -1,6 +1,7 @@
 cutfind2 <- function(x, markers, npeaks=NULL, DensityThreshold=NULL, gridsize=14000, max.restarts=1, epsilon=1e-9, maxit=8000, seed=42, auto=TRUE, metric="AIC") {
 
 #'  @title Cutfind
+#'  @description finds summary stats for distributions by either mixture modelling or finding the mode and mad of unimodal distributions
 #'  @author Julian Spagnuolo
 #'
 #'  @param x data.frame or named matrix containing raw data for which you wish to identify cutoff values for subsequent transformation.
