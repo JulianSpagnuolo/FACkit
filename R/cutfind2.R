@@ -85,8 +85,8 @@ cutfind2 <- function(x, markers, npeaks=NULL, DensityThreshold=NULL, gridsize=14
     }
     if(length(peaks$peaks) > 1)
     {
-      cat("\n Found ", length(peaks$peaks), " peaks in ",i, " distribution" )
-      cat("\n Mixture modelling ", i, " marker \n")
+      cat("\nFound ", length(peaks$peaks), " peaks in ",i, " distribution" )
+      cat("\nMixture modelling ", i, " marker \n")
       k <- length(peaks$peaks)
 
       ## Fit a miture model to the data
@@ -111,9 +111,33 @@ cutfind2 <- function(x, markers, npeaks=NULL, DensityThreshold=NULL, gridsize=14
           comps[l,]$AIC <- mod$aic
           comps[l,]$ICL <- mod$ICL
         }
+        ### Choose the simplest model if BIC/AIC for 2 models are close enough.
+        if(metric != "ICL")
+        {
+          for(l in 1:nrow(comps)-1)
+          {
+            mod.dif <- (comps[l,metric] - comps[l+1,metric])/comps[l,metric]
+            if(mod.dif < 5e-5*comps[l,metric])
+            {
+              k <- as.integer(row.names(comps[l,]))
+              cat("Optimum number of components is ", k,"\n")
+            }
+          }
+        }
+        if(metric == "ICL")
+        {
+          k <- as.integer(row.names(comps[which(comps[,metric] == max(comps[,metric])),]))
+          cat("Optimum number of components is ", row.names(comps[which(comps[,metric] == max(comps[,metric])),]),"\n")
+        }
 
-        k <- as.integer(row.names(comps[which(comps[,metric] == min(comps[,metric])),]))
-        cat("Optimum number of components is ", row.names(comps[which(comps[,metric] == min(comps[,metric])),]),"\n")
+        #if(metric != "ICL")
+        #{
+        #  k <- as.integer(row.names(comps[which(comps[,metric] == min(comps[,metric])),]))
+        #}
+        #else if(metric == "ICL")
+        #{
+        #  k <- as.integer(row.names(comps[which(comps[,metric] == max(comps[,metric])),]))
+        #}
       }
 
       mixmod <- EMMIXskew::EmSkew(dat=as.matrix(x[,i]), g=k, itmax=itmax, epsilon=epsilon, distr="mst", debug=F)
