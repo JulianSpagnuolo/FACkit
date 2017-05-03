@@ -1,4 +1,4 @@
-cutfind2 <- function(x, markers, npeaks=NULL, DensityThreshold=NULL, gridsize=14000, max.restarts=1, epsilon=1e-9, maxit=8000, seed=42, auto=TRUE, metric="AIC") {
+cutfind2 <- function(x, markers, npeaks=NULL, DensityThreshold=NULL, gridsize=14000, max.restarts=1, epsilon=1e-9, maxit=8000, seed=42, auto=TRUE, metric="AIC", which.dev=2) {
 
 #'  @title Cutfind
 #'  @description finds summary stats for distributions by either mixture modelling or finding the mode and mad of unimodal distributions
@@ -15,6 +15,7 @@ cutfind2 <- function(x, markers, npeaks=NULL, DensityThreshold=NULL, gridsize=14
 #'  @param seed This is the system seed used by the mixture modelling step, just to increase the reproducibility of the function
 #'  @param auto Logical - if TRUE the function will search for the optimal number of components (distributions) to fit in the mixture model by searching a range of +/- 2 peaks from the number of peaks identified.
 #'  @param metric vector - the metric used to choose the optimum mixture model to fit to the data choose one of "BIC", "AIC", or "ICL"
+#'  @param which.dev integer - the number of deviations from the peak at which to set the cutoff value. Default = 2
 #'  @details
 #'
 
@@ -80,8 +81,8 @@ cutfind2 <- function(x, markers, npeaks=NULL, DensityThreshold=NULL, gridsize=14
     if(length(peaks$peaks) == 1 )
     {
       cat("\n Found", length(peaks$peaks), " peak in ", i, " distribution")
-      cutoffs[[i]]$right  <- dmode(x[,i], gridsize=gridsize, fudge=fudge, bw.method="bw.select")+2*mad(x=x[,i],center=dmode(x[,i], gridsize=gridsize, fudge=fudge, bw.method="bw.select"))
-      cutoffs[[i]]$left  <- dmode(x[,i], gridsize=gridsize, fudge=fudge, bw.method="bw.select")-2*mad(x=x[,i],center=dmode(x[,i], gridsize=gridsize, fudge=fudge, bw.method="bw.select"))
+      cutoffs[[i]]$right  <- dmode(x[,i], gridsize=gridsize, fudge=fudge, bw.method="bw.select")+which.dev*mad(x=x[,i],center=dmode(x[,i], gridsize=gridsize, fudge=fudge, bw.method="bw.select"))
+      cutoffs[[i]]$left  <- dmode(x[,i], gridsize=gridsize, fudge=fudge, bw.method="bw.select")-which.dev*mad(x=x[,i],center=dmode(x[,i], gridsize=gridsize, fudge=fudge, bw.method="bw.select"))
       cutoffs[[i]]$peak <-  peaks$dens$x[peaks$peaks]
       cutoffs[[i]]$sigma <- mad(x=x[,i],center=dmode(x[,i], gridsize=gridsize, fudge=fudge, bw.method="bw.select"))
       cat("\n", i, " done!")
@@ -199,8 +200,8 @@ cutfind2 <- function(x, markers, npeaks=NULL, DensityThreshold=NULL, gridsize=14
       for(j in 1:length(mixmod$pro)){
         set.seed(42)
         y[[j]]$model <- EMMIXskew::rdmst(n=table(mixmod$clust)[j],p=1, mean=mixmod$mu[,j], cov=mixmod$sigma[[j]], del=mixmod$delta[j])
-        y[[j]]$left <- mixmod$modpts[j]-2*mad(x=y[[j]]$model, center=mixmod$modpts[j])
-        y[[j]]$right <- mixmod$modpts[j]+2*mad(x=y[[j]]$model, center=mixmod$modpts[j])
+        y[[j]]$left <- mixmod$modpts[j]-which.dev*mad(x=y[[j]]$model, center=mixmod$modpts[j])
+        y[[j]]$right <- mixmod$modpts[j]+which.dev*mad(x=y[[j]]$model, center=mixmod$modpts[j])
       }
       cutoffs[[i]]$model <- mixmod
       cutoffs[[i]]$components <- y
