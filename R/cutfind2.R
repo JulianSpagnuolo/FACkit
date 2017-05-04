@@ -78,7 +78,7 @@ cutfind2 <- function(x, markers, npeaks=NULL, DensityThreshold=NULL, gridsize=14
     # Find the summary stats for cutoff values
 
     ## For unimodal distributions find mode-centered mad.
-    if(length(peaks$peaks) == 1 )
+    if(length(peaks$peaks) == 1 & !is.na(npeaks[i]))
     {
       cat("\n Found", length(peaks$peaks), " peak in ", i, " distribution")
       cutoffs[[i]]$right  <- dmode(x[,i], gridsize=gridsize, fudge=fudge, bw.method="bw.select")+which.dev*mad(x=x[,i],center=dmode(x[,i], gridsize=gridsize, fudge=fudge, bw.method="bw.select"))
@@ -87,11 +87,21 @@ cutfind2 <- function(x, markers, npeaks=NULL, DensityThreshold=NULL, gridsize=14
       cutoffs[[i]]$sigma <- mad(x=x[,i],center=dmode(x[,i], gridsize=gridsize, fudge=fudge, bw.method="bw.select"))
       cat("\n", i, " done!")
     }
-    if(length(peaks$peaks) > 1)
+    if(length(peaks$peaks) > 1 | is.na(npeaks[i]))
     {
       cat("\nFound ", length(peaks$peaks), " peaks in ",i, " distribution" )
       cat("\nMixture modelling ", i, " marker \n")
-      k <- length(peaks$peaks)
+      # parameterise k to find optimal components in shouldered skew mixtures.
+      # if skipped peak finding or smoothing to find expected peak, set initial components to 2
+      # this should be used if the distribution is suspected to be mixed but no discrete peaks are visible.
+      if(!is.na(npeaks[i]))
+      {
+        k <- length(peaks$peaks)
+      }
+      else if(is.na(npeaks[i]))
+      {
+        k <- 2
+      }
 
       ## Fit a miture model to the data
       # create loop to make sure the Modelling function converges
