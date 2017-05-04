@@ -51,18 +51,25 @@ cutfind2 <- function(x, markers, npeaks=NULL, DensityThreshold=NULL, gridsize=14
   for(i in markers)
   {
     cat("\nProcessing", i)
-    cat("\nLooking for ", as.integer(npeaks[i])," peaks")
-
-    fudge <- 0
-    peaks <- peaksNvalleys(data=x[,i], minDensityThreshold=DensityThreshold[i], gridsize=gridsize, fudge=fudge)
-
-    if(length(peaks$peaks) < 1)
+    if(!is.na[i])
     {
-      cat("\n No peaks found for ", i, "!!! \nTry changing gridsize or minDensityThreshold parameters")
+      cat("\nLooking for ", as.integer(npeaks[i])," peaks")
     }
-    ## Incrementally increase smoothing of the distribution to find expected number of peaks
+    else if(is.na[i])
+    {
+      cat("\nExpected peaks not parameterised, skipping peak identification")
+    }
+
     if(!is.na(npeaks[i]))
     {
+      fudge <- 0
+      peaks <- peaksNvalleys(data=x[,i], minDensityThreshold=DensityThreshold[i], gridsize=gridsize, fudge=fudge)
+
+      if(length(peaks$peaks) < 1)
+      {
+        cat("\n No peaks found for ", i, "!!! \nTry changing gridsize or minDensityThreshold parameters")
+      }
+      ## Incrementally increase smoothing of the distribution to find expected number of peaks
       if(as.integer(npeaks[i]) != length(peaks$peaks))
       {
         cat("\nFudging bandwidth parameter to increase smoothing")
@@ -171,8 +178,9 @@ cutfind2 <- function(x, markers, npeaks=NULL, DensityThreshold=NULL, gridsize=14
       maxit <- itmax + 2000
       while(mixmod$error == 1 & restarts <= max.restarts)
       {
-        cat(" Model failed to converge, restarting with params from initial run\n")
-        restart <- restart + 1
+        cat("\nModel failed to converge, restarting with params from initial run and increase max iterations")
+        restarts <- restarts + 1
+        maxit <- maxit + 2000
         set.seed(42)
         mixmod <- EMMIXskew::EmSkew(dat=as.matrix(x[,i]), g=k, itmax=maxit, epsilon=epsilon, distr="mst", debug=F, init=list(pro, mu, sigma, dof, delta))
         # get restart params
@@ -181,12 +189,6 @@ cutfind2 <- function(x, markers, npeaks=NULL, DensityThreshold=NULL, gridsize=14
         sigma <- mixmod$sigma
         dof <- mixmod$dof
         delta <- mixmod$delta
-
-        if(mixmod$error == 1)
-        {
-          maxit <- maxit + 2000
-          cat(" Model failed to converge, increasing max allowed iterations and restarting\n")
-        }
       }
       if(mixmod$error == 0)
       {
