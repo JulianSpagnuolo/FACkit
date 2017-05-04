@@ -85,7 +85,7 @@ cutfind2 <- function(x, markers, npeaks=NULL, DensityThreshold=NULL, gridsize=14
     # Find the summary stats for cutoff values
 
     ## For unimodal distributions find mode-centered mad.
-    if(length(peaks$peaks) == 1 & !is.na(npeaks[i]))
+    if(!is.na(npeaks[i]) && length(peaks$peaks) == 1)
     {
       cat("\n Found", length(peaks$peaks), " peak in ", i, " distribution")
       cutoffs[[i]]$right  <- dmode(x[,i], gridsize=gridsize, fudge=fudge, bw.method="bw.select")+which.dev*mad(x=x[,i],center=dmode(x[,i], gridsize=gridsize, fudge=fudge, bw.method="bw.select"))
@@ -178,17 +178,20 @@ cutfind2 <- function(x, markers, npeaks=NULL, DensityThreshold=NULL, gridsize=14
       maxit <- itmax + 2000
       while(mixmod$error == 1 & restarts <= max.restarts)
       {
-        cat("\nModel failed to converge, restarting with params from initial run and increase max iterations")
-        restarts <- restarts + 1
-        maxit <- maxit + 2000
         set.seed(42)
         mixmod <- EMMIXskew::EmSkew(dat=as.matrix(x[,i]), g=k, itmax=maxit, epsilon=epsilon, distr="mst", debug=F, init=list(pro, mu, sigma, dof, delta))
         # get restart params
-        pro <- mixmod$pro
-        mu <- mixmod$mu
-        sigma <- mixmod$sigma
-        dof <- mixmod$dof
-        delta <- mixmod$delta
+        if(mixmod$error == 1)
+        {
+          cat("\nModel failed to converge, restarting with params from initial run and increase max iterations")
+          restarts <- restarts + 1
+          maxit <- maxit + 2000
+          pro <- mixmod$pro
+          mu <- mixmod$mu
+          sigma <- mixmod$sigma
+          dof <- mixmod$dof
+          delta <- mixmod$delta
+        }
       }
       if(mixmod$error == 0)
       {
