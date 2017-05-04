@@ -51,11 +51,11 @@ cutfind2 <- function(x, markers, npeaks=NULL, DensityThreshold=NULL, gridsize=14
   for(i in markers)
   {
     cat("\nProcessing", i)
-    if(!is.na[i])
+    if(!is.na(npeaks[i]))
     {
       cat("\nLooking for ", as.integer(npeaks[i])," peaks")
     }
-    else if(is.na[i])
+    else if(is.na(npeaks[i]))
     {
       cat("\nExpected peaks not parameterised, skipping peak identification")
     }
