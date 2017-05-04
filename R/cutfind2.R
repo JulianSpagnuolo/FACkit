@@ -130,7 +130,7 @@ cutfind2 <- function(x, markers, npeaks=NULL, DensityThreshold=NULL, gridsize=14
                             ICL=vector(length=length(seq(from=k-1, to=k+1, by=1))))
         for(l in 1:length(row.names(comps)))
         {
-          mod <- EMMIXskew::EmSkew(dat=as.matrix(x[,i]), g=as.integer(row.names(comps)[l]), itmax=500, debug=F, distr="mst", epsilon=1e-5)
+          mod <- EmSkew(dat=as.matrix(x[,i]), g=as.integer(row.names(comps)[l]), itmax=500, debug=F, distr="mst", epsilon=1e-5)
           comps[l,]$BIC <- mod$bic
           comps[l,]$AIC <- mod$aic
           comps[l,]$ICL <- mod$ICL
@@ -164,7 +164,7 @@ cutfind2 <- function(x, markers, npeaks=NULL, DensityThreshold=NULL, gridsize=14
         #}
       }
       set.seed(42)
-      mixmod <- EMMIXskew::EmSkew(dat=as.matrix(x[,i]), g=k, itmax=itmax, epsilon=epsilon, distr="mst", debug=F)
+      mixmod <- EmSkew(dat=as.matrix(x[,i]), g=k, itmax=itmax, epsilon=epsilon, distr="mst", debug=F)
       error <- mixmod$error
       # Get restart params if modelling failed to converge in maxit
       if(error == 1)
@@ -182,7 +182,7 @@ cutfind2 <- function(x, markers, npeaks=NULL, DensityThreshold=NULL, gridsize=14
       while(error == 1 & restarts <= max.restarts)
       {
         set.seed(42)
-        mixmod <- EMMIXskew::EmSkew(dat=as.matrix(x[,i]), g=k, itmax=maxit, epsilon=epsilon, distr="mst", debug=F, init=list(pro, mu, sigma, dof, delta))
+        mixmod <- EmSkew(dat=as.matrix(x[,i]), g=k, itmax=maxit, epsilon=epsilon, distr="mst", debug=F, init=list(pro, mu, sigma, dof, delta))
         # get restart params
         error <- mixmod$error
         if(error == 1)
