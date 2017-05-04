@@ -16,7 +16,7 @@ cutfind2 <- function(x, markers, npeaks=NULL, DensityThreshold=NULL, gridsize=14
 #'  @param auto Logical - if TRUE the function will search for the optimal number of components (distributions) to fit in the mixture model by searching a range of +/- 2 peaks from the number of peaks identified.
 #'  @param metric vector - the metric used to choose the optimum mixture model to fit to the data choose one of "BIC", "AIC", or "ICL"
 #'  @param which.dev integer - the number of deviations from the peak at which to set the cutoff value. Default = 2
-#'  @details
+#'  @details blah blah
 #'
 
   if(is.null(npeaks))
