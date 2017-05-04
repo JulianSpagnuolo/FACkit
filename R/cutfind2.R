@@ -96,7 +96,10 @@ cutfind2 <- function(x, markers, npeaks=NULL, DensityThreshold=NULL, gridsize=14
     }
     if(length(peaks$peaks) > 1 | is.na(npeaks[i]))
     {
-      cat("\nFound ", length(peaks$peaks), " peaks in ",i, " distribution" )
+      if(!is.na(npeaks[i]))
+      {
+        cat("\nFound ", length(peaks$peaks), " peaks in ",i, " distribution" )
+      }
       cat("\nMixture modelling ", i, " marker \n")
       # parameterise k to find optimal components in shouldered skew mixtures.
       # if skipped peak finding or smoothing to find expected peak, set initial components to 2
@@ -162,9 +165,9 @@ cutfind2 <- function(x, markers, npeaks=NULL, DensityThreshold=NULL, gridsize=14
       }
       set.seed(42)
       mixmod <- EMMIXskew::EmSkew(dat=as.matrix(x[,i]), g=k, itmax=itmax, epsilon=epsilon, distr="mst", debug=F)
-
+      error <- mixmod$error
       # Get restart params if modelling failed to converge in maxit
-      if(mixmod$error == 1)
+      if(error == 1)
       {
         pro <- mixmod$pro
         mu <- mixmod$mu
@@ -176,12 +179,13 @@ cutfind2 <- function(x, markers, npeaks=NULL, DensityThreshold=NULL, gridsize=14
       # Restart mixture modelling until it converges
       restarts <- 0
       maxit <- itmax + 2000
-      while(mixmod$error == 1 & restarts <= max.restarts)
+      while(error == 1 & restarts <= max.restarts)
       {
         set.seed(42)
         mixmod <- EMMIXskew::EmSkew(dat=as.matrix(x[,i]), g=k, itmax=maxit, epsilon=epsilon, distr="mst", debug=F, init=list(pro, mu, sigma, dof, delta))
         # get restart params
-        if(mixmod$error == 1)
+        error <- mixmod$error
+        if(error == 1)
         {
           cat("\nModel failed to converge, restarting with params from initial run and increase max iterations")
           restarts <- restarts + 1
