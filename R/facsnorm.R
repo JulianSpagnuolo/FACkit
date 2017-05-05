@@ -22,12 +22,10 @@ facsnorm <- function(x, cutoffs, asinCofac=25, method=c("arcsin","logical"))
       if(sign(min(x[i])) == -1)
       {
         x[i] <- (x[i]+1)-(min(x[i]))
-        x[i] <- log10(x[i])
       }
       if(sign(min(x[i])) == 1)
       {
         x[i] <- (x[i]+1)+(min(x[i]))
-        x[i] <- log10(x[i])
       }
     }
     return(x)
