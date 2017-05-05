@@ -144,7 +144,6 @@ cutfind2 <- function(x, markers, npeaks=NULL, DensityThreshold=NULL, gridsize=14
         # remove model optimisation to save memory
 
         ### Choose the simplest model if BIC/AIC for 2 models are close enough.
-        print(comps)
         if(metric != "ICL")
         {
           for(l in 1:nrow(comps)-1)
