@@ -231,11 +231,11 @@ cutfind2 <- function(x, markers, npeaks=NULL, DensityThreshold=NULL, gridsize=14
       }
       if(mixmod$error == 0)
       {
-        cat("Success! Modeling ", i," as ", length(mixmod$modpts), " skew normal distributions within ",itmax, " iterations\n")
+        cat("Success! Modeling ", i," as ", length(mixmod$modpts), " skew t distributions\n")
       }
       if(mixmod$error == 1)
       {
-        cat("Failed to converge within", itmax,"iterations\n")
+        cat("Failed to converge\n")
       }
       if(mixmod$error == 2)
       {
