@@ -21,31 +21,15 @@ facsnorm <- function(x, cutoffs, asinCofac=25, method=c("arcsin","logical"))
     {
       if(sign(min(x[i])) == -1)
       {
-        x[i] <- x[i]-(min(x[i])+1)
+        x[i] <- (x[i]+1)-(min(x[i]))
         x[i] <- log10(x[i])
       }
       if(sign(min(x[i])) == 1)
       {
-        x[i] <- x[i]+(min(x[i])+1)
+        x[i] <- (x[i]+1)+(min(x[i]))
         x[i] <- log10(x[i])
       }
-      if(any(sign(cutoffs) == -1))
-      {
-        for(i in 1:length(cutoffs))
-        {
-          if(sign(cutoffs[i]) == -1)
-          {
-            cutoffs[i] <- log10((cutoffs[i]+1)-(2*cutoffs[i]))
-          }
-          if(sign(cutoffs[i]) == 1)
-          {
-            cutoffs[i] <- log10(cutoffs[i])
-          }
-        }
-      }
-      x <- sweep(x,2, cutoffs)
     }
     return(x)
   }
-
 }
