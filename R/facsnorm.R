@@ -3,7 +3,7 @@ facsnorm <- function(x, cutoffs, asinCofac=25, method=c("arcsin","logical"))
   #' @title Facsnorm
   #' @author Julian Spagnuolo, Tobias Rutishauser
   #' @param x data.frame or matrix of raw data
-  #' @param cutoffs vector of cutoff values. If the vector is unnamed the values MUST be in the order of the markers in x that they are to be applied to
+  #' @param cutoffs vector of cutoff values. values MUST be in the order of the markers in x that they are to be applied to
   #' @param asinCofac spreading parameter for arcsin transformation. Only needs to be set if method == arcsin. Default == 25.
   #' @param method Type of transformation to be applied, either arcsin or logical transformation
   if(method == "arcsin")
@@ -29,6 +29,21 @@ facsnorm <- function(x, cutoffs, asinCofac=25, method=c("arcsin","logical"))
         x[i] <- x[i]+(min(x[i])+1)
         x[i] <- log10(x[i])
       }
+      if(any(sign(cutoffs) == -1))
+      {
+        for(i in 1:length(cutoffs))
+        {
+          if(sign(cutoffs[i]) == -1)
+          {
+            cutoffs[i] <- log10((cutoffs[i]+1)-(2*cutoffs[i]))
+          }
+          if(sign(cutoffs[i]) == 1)
+          {
+            cutoffs[i] <- log10(cutoffs[i])
+          }
+        }
+      }
+      x <- sweep(x,2, cutoffs)
     }
     return(x)
   }
