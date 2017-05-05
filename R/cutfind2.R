@@ -128,14 +128,23 @@ cutfind2 <- function(x, markers, npeaks=NULL, DensityThreshold=NULL, gridsize=14
                             BIC=vector(length=length(seq(from=k-1, to=k+1, by=1))),
                             AIC=vector(length=length(seq(from=k-1, to=k+1, by=1))),
                             ICL=vector(length=length(seq(from=k-1, to=k+1, by=1))))
+
+        ## Create list object to store data from model optimisation
+        mod <- vector(mode="list", length=length(seq(from=k-1, to=k+1, by=1)))
+        names(mod) <- row.names(comps)
+
+        # Loop to find optimal model
         for(l in 1:length(row.names(comps)))
         {
-          mod <- EmSkew(dat=as.matrix(x[,i]), g=as.integer(row.names(comps)[l]), itmax=500, debug=F, distr="mst", epsilon=1e-5)
-          comps[l,]$BIC <- mod$bic
-          comps[l,]$AIC <- mod$aic
-          comps[l,]$ICL <- mod$ICL
+          mod[[row.names(comps)[l]]] <- EmSkew(dat=as.matrix(x[,i]), g=as.integer(row.names(comps)[l]), itmax=500, debug=F, distr="mst", epsilon=1e-5)
+          comps[l,]$BIC <- mod[[row.names(comps)[l]]]$bic
+          comps[l,]$AIC <- mod[[row.names(comps)[l]]]$aic
+          comps[l,]$ICL <- mod[[row.names(comps)[l]]]$ICL
         }
+        # remove model optimisation to save memory
+
         ### Choose the simplest model if BIC/AIC for 2 models are close enough.
+        print(comps)
         if(metric != "ICL")
         {
           for(l in 1:nrow(comps)-1)
@@ -145,6 +154,12 @@ cutfind2 <- function(x, markers, npeaks=NULL, DensityThreshold=NULL, gridsize=14
             {
               k <- as.integer(row.names(comps[l,]))
               cat("Optimum number of components is ", k,"\n")
+              # Get some starting params from optimisation step
+              pro <- mod[[row.names(comps[l,])]]$pro
+              mu <- mod[[row.names(comps[l,])]]$mu
+              sigma <- mod[[row.names(comps[l,])]]$sigma
+              dof <- mod[[row.names(comps[l,])]]$dof
+              delta <- mod[[row.names(comps[l,])]]$delta
             }
           }
         }
@@ -152,7 +167,16 @@ cutfind2 <- function(x, markers, npeaks=NULL, DensityThreshold=NULL, gridsize=14
         {
           k <- as.integer(row.names(comps[which(comps[,metric] == max(comps[,metric])),]))
           cat("Optimum number of components is ", row.names(comps[which(comps[,metric] == max(comps[,metric])),]),"\n")
+          # Get some starting params from optimisation step
+          pro <- mod[[row.names(comps[which(comps[,metric] == max(comps[,metric])),])]]$pro
+          mu <- mod[[row.names(comps[which(comps[,metric] == max(comps[,metric])),])]]$mu
+          sigma <- mod[[row.names(comps[which(comps[,metric] == max(comps[,metric])),])]]$sigma
+          dof <- mod[[row.names(comps[which(comps[,metric] == max(comps[,metric])),])]]$dof
+          delta <- mod[[row.names(comps[which(comps[,metric] == max(comps[,metric])),])]]$delta
         }
+
+        # remove the mod object from memory
+        rm(mod)
 
         #if(metric != "ICL")
         #{
@@ -163,8 +187,17 @@ cutfind2 <- function(x, markers, npeaks=NULL, DensityThreshold=NULL, gridsize=14
         #  k <- as.integer(row.names(comps[which(comps[,metric] == max(comps[,metric])),]))
         #}
       }
-      set.seed(42)
-      mixmod <- EmSkew(dat=as.matrix(x[,i]), g=k, itmax=itmax, epsilon=epsilon, distr="mst", debug=F)
+
+      if(auto == TRUE)
+      {
+        set.seed(42)
+        mixmod <- EmSkew(dat=as.matrix(x[,i]), g=k, itmax=itmax, epsilon=epsilon, distr="mst", debug=F)
+      }
+      if(auto == FALSE)
+      {
+        set.seed(42)
+        mixmod <- EmSkew(dat=as.matrix(x[,i]), g=k, itmax=itmax, epsilon=epsilon, distr="mst", debug=F)
+      }
       error <- mixmod$error
       # Get restart params if modelling failed to converge in maxit
       if(error == 1)
@@ -218,7 +251,7 @@ cutfind2 <- function(x, markers, npeaks=NULL, DensityThreshold=NULL, gridsize=14
       y <- vector(mode="list", length=length(mixmod$pro))
       for(j in 1:length(mixmod$pro)){
         set.seed(42)
-        y[[j]]$model <- EMMIXskew::rdmst(n=table(mixmod$clust)[j],p=1, mean=mixmod$mu[,j], cov=mixmod$sigma[[j]], del=mixmod$delta[j])
+        y[[j]]$model <- rdmst(n=table(mixmod$clust)[j],p=1, mean=mixmod$mu[,j], cov=mixmod$sigma[[j]], del=mixmod$delta[j])
         y[[j]]$left <- mixmod$modpts[j]-which.dev*mad(x=y[[j]]$model, center=mixmod$modpts[j])
         y[[j]]$right <- mixmod$modpts[j]+which.dev*mad(x=y[[j]]$model, center=mixmod$modpts[j])
       }
