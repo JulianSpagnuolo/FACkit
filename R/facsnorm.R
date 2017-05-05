@@ -8,6 +8,7 @@ facsnorm <- function(x, cutoffs, asinCofac=25, method=c("arcsin","logical"))
   #' @param method Type of transformation to be applied, either arcsin or logical transformation
   if(method == "arcsin")
   {
+    cat("Using arcsin Transformation\n")
       if(is.null(names(cutoffs)))
       {
         names(cutoffs) <- names(x[1:ncol(x)])
@@ -17,17 +18,20 @@ facsnorm <- function(x, cutoffs, asinCofac=25, method=c("arcsin","logical"))
   }
   if(method == "logical")
   {
+    cat("Using Logical Transformation\n")
     for(i in 1:ncol(x))
     {
-      if(sign(min(x[i])) == -1)
+      if(sign(min(x[,i])) == -1)
       {
-        x[i] <- (x[i]+1)-(min(x[i]))
+        x[,i] <- x[,i]-min(x[,i])
       }
-      if(sign(min(x[i])) == 1)
+      if(sign(min(x[,i])) == 1)
       {
-        x[i] <- (x[i]+1)+(min(x[i]))
+        x[,i] <- x[,i]+min(x[,i])
       }
     }
+    x <- sweep(x, 2, STATS = 1, FUN = "+")
+
     return(x)
   }
 }
