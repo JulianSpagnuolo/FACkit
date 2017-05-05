@@ -18,11 +18,11 @@ cutoffs <- function(cut.data, markers, component=NULL)
 
   for(i in markers)
   {
-    if(length(cut.data[[i]] == 3))
+    if(length(cut.data[[i]]) == 3)
     {
       cutoffs[i] <- cut.data[[i]]$components[[component[i]]]$right
     }
-    if(length(cut.data[[i]] == 4))
+    if(length(cut.data[[i]]) == 4)
     {
       cutoffs[i] <- cut.data[[i]]$right
     }
