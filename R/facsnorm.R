@@ -36,7 +36,7 @@ facsnorm <- function(x, cutoffs, asinCofac=25, method=c("arcsin","loglin","logit
   if(method == "logit")
   {
     cat("Using logit transformation\n")
-    # Linearise the data with 0 as minimum
+    # Linearise the data with 1 as minimum (avoids creating infinite values when log transforming)
     for(i in 1:ncol(x))
     {
       if(sign(min(x[,i])) == -1)
@@ -47,11 +47,14 @@ facsnorm <- function(x, cutoffs, asinCofac=25, method=c("arcsin","loglin","logit
       {
         x[,i] <- x[,i]+min(x[,i])
       }
-      # fit the data between 0 and 1
+    }
+    # add 1 to each value to avoid log-transforming 0 (gives and infinite number)
+    x <- sweep(x, 2, STATS = 1, FUN = "+")
+    # put data on scale between 0 and 1 and perform logit transformation
+    for(i in 1:ncol(x))
+    {
       x[,i] <- x[,i]/max(x[,i])
-
-      # Apply logit transformation
-      x[,i] <- log10((x[,i]/(1-x[,i])))
+      x[,i] <- log(x[,i]/1-x[,i])
     }
     return(x)
   }
