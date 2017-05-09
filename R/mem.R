@@ -2,26 +2,26 @@ mem <- function(expdata, markers=NULL, cluster.id, ref.pop=NULL, IQR.thresh=NULL
 {
   #' @author Julian Spagnuolo
   #' @references Diggins, K.E., et al, (2017) Nature Methods http://dx.doi.org/10.1038/nmeth.4149
-  
+
   if(is.null(markers))
   {
     markers <- names(expdata)
   }
   data <- expdata[,markers]
   data$cluster.id <- cluster.id
-  
+
   #  Initialize variables
   #markers = as.vector(markers)
   n.markers = length(markers)
   n.cells = nrow(expdata)
   n.pops = length(unique(data$cluster.id))
   pop.names = unique(data$cluster.id)
-  
+
   MAGpop = matrix(nrow=n.pops,ncol=n.markers)
   MAGref = matrix(nrow=n.pops,ncol=n.markers)
   IQRpop = matrix(nrow=n.pops,ncol=n.markers)
   IQRref = matrix(nrow=n.pops,ncol=n.markers)
-  
+
   if(statistic == "median")
   {
     # Get population medians and IQRs
@@ -31,14 +31,14 @@ mem <- function(expdata, markers=NULL, cluster.id, ref.pop=NULL, IQR.thresh=NULL
       MAGpop[i,] = abs(apply(data[which(data$cluster.id == pop),markers],2,FUN=median,na.rm=TRUE))
       IQRpop[i,] = apply(data[which(data$cluster.id == pop),markers],2,FUN=IQR,na.rm=TRUE)
     }
-    
+
     # Get reference population medians and IQRs
     if(!is.null(ref.pop))
     {
       if(length(ref.pop) > 1)
       {
         ref.pop.data <- data[which(data$cluster.id == ref.pop), markers]
-        
+
         MAGref = matrix(rep(abs(apply(ref.pop.data,2,FUN=median,na.rm=TRUE)), each = n.pops),n.pops)
         IQRref = matrix(rep(apply(ref.pop.data,2,FUN=IQR,na.rm=TRUE),each = n.pops),n.pops)
       }
@@ -58,7 +58,7 @@ mem <- function(expdata, markers=NULL, cluster.id, ref.pop=NULL, IQR.thresh=NULL
       }
     }
   }
-  
+
   if(statistic == "mode")
   {
     #IQRpop <- matrix(nrow = length(unique(data$cluster.id)), ncol = length(markers), dimnames = list(unique(data$cluster.id), markers))
@@ -67,11 +67,11 @@ mem <- function(expdata, markers=NULL, cluster.id, ref.pop=NULL, IQR.thresh=NULL
     {
       for(n in 1:length(markers))
       {
-        MAGpop[i,n] <- dmode(x=data[which(data$cluster.id == pop.names[i]), markers[n]], gridsize = 14000)
+        MAGpop[i,n] <- dmode(x=data[which(data$cluster.id == pop.names[i]), markers[n]], gridsize = 14000, fudge = 0)
       }
-      IQRpop[i,] = apply(data[which(data$cluster.id == pop.names[i]),markers],2,FUN=IQR,na.rm=TRUE)
+      IQRpop[i,] = apply(data[which(data$cluster.id == pop.names[i]),markers],2,FUN=IQR,na.rm=TRUE, fudge=0)
     }
-    
+
     # Get reference population modes and IQRs
     if(!is.null(ref.pop))
     {
@@ -79,7 +79,7 @@ mem <- function(expdata, markers=NULL, cluster.id, ref.pop=NULL, IQR.thresh=NULL
       names(MAGref) <- markers
       for(n in markers)
       {
-        MAGref[n] <- dmode(data[which(data$cluster.id == ref.pop), n], gridsize = 14000)
+        MAGref[n] <- dmode(data[which(data$cluster.id == ref.pop), n], gridsize = 14000, fudge=0)
       }
       MAGref = matrix(data=MAGref, nrow=n.pops, ncol = length(markers), byrow=TRUE)
       IQRref = matrix(rep(apply(data[which(data$cluster.id == ref.pop), markers],2,FUN=IQR,na.rm=TRUE),each = n.pops),n.pops)
@@ -91,19 +91,19 @@ mem <- function(expdata, markers=NULL, cluster.id, ref.pop=NULL, IQR.thresh=NULL
       {
         for(n in markers)
         {
-          MAGref[i,n] <- dmode(data[which(data$cluster.id != pop.names[i]),n], gridsize = 14000)
+          MAGref[i,n] <- dmode(data[which(data$cluster.id != pop.names[i]),n], gridsize = 14000, fudge=0)
         }
         IQRref[i,] = apply(data[which(data$cluster.id != pop.names[i]), markers],2,FUN=IQR,na.rm=TRUE)
       }
     }
   }
-  
+
   # Set and apply IQR threshold
   if(is.null(IQR.thresh))
   {
     IQR.thresh = 0.5
   }
-  
+
   if(IQR.thresh=="auto")
   {
     #   Use universal IQR threshodling
@@ -119,27 +119,27 @@ mem <- function(expdata, markers=NULL, cluster.id, ref.pop=NULL, IQR.thresh=NULL
     IQR.thresh = mean(c(IQR.thresh.pop,IQR.thresh.ref))
     print(IQR.thresh)
   }
-  
+
   for(i in 1:length(markers))
   {
     IQRpop[,i] = pmax(IQRpop[,i],IQR.thresh)
     IQRref[,i] = pmax(IQRref[,i],IQR.thresh)
   }
-  
+
   if(n.pops < 4)
   {
     IQR.thresh = 0.5
   }
-  
+
   # Calculate MEM scores
   MAG.diff = MAGpop - MAGref
   MEM.matrix = abs(MAGpop - MAGref) + (IQRref/IQRpop) - 1
   MEM.matrix[!(MAG.diff >= 0)] <- (-MEM.matrix[!(MAG.diff >= 0)])
-  
+
   # Put MEM values on -10 to +10 scale
   scale.max = max(abs(MEM.matrix[,c(1:ncol(MEM.matrix)-1)]))
   MEM.matrix = cbind((MEM.matrix[,c(1:ncol(MEM.matrix)-1)]/scale.max)*10, MEM.matrix[,ncol(MEM.matrix)])
-  
+
   #Rename rows and columns of all matrices
   rename.table <- function(x)
   {
@@ -147,7 +147,7 @@ mem <- function(expdata, markers=NULL, cluster.id, ref.pop=NULL, IQR.thresh=NULL
     rownames(x) = pop.names
     return(x)
   }
-  
+
   # Apply rename_table function across matrices
   object.list.labeled <- lapply(list(MAGpop[,1:length(markers)],MAGref[,1:length(markers)],IQRpop[,1:length(markers)],IQRref[,1:length(markers)],MEM.matrix[,1:length(markers)]),rename.table)
   # List all matrices for export
