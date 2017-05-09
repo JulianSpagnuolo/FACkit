@@ -69,7 +69,7 @@ mem <- function(expdata, markers=NULL, cluster.id, ref.pop=NULL, IQR.thresh=NULL
       {
         MAGpop[i,n] <- dmode(x=data[which(data$cluster.id == pop.names[i]), markers[n]], gridsize = 14000, fudge = 0)
       }
-      IQRpop[i,] = apply(data[which(data$cluster.id == pop.names[i]),markers],2,FUN=IQR,na.rm=TRUE, fudge=0)
+      IQRpop[i,] = apply(data[which(data$cluster.id == pop.names[i]),markers],2,FUN=IQR,na.rm=TRUE)
     }
 
     # Get reference population modes and IQRs
