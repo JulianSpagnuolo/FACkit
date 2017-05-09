@@ -1,12 +1,9 @@
-phenotyper <- function(data, markers, threshold, prob=0.95, epsilon=1e-6, itmax=2000, minDensityThreshold, verbose=TRUE, get.start=TRUE, max.restarts=1) 
+phenotyper <- function(data, markers, threshold, prob=0.95, epsilon=1e-6, itmax=2000, minDensityThreshold, verbose=TRUE, get.start=TRUE, max.restarts=1)
 {
-  require(EMMIXskew)
-  require(KernSmooth)
-  require(psych)
-  
+
   ## First determine initial cluster identities.
   init.clust <- matrix(ncol=ncol(data), nrow=nrow(data), dimnames=list(c(1:nrow(data)), c(markers)))
-  if(is.list(threshold) == FALSE) 
+  if(is.list(threshold) == FALSE)
   {
     for(i in markers)
     {
@@ -24,7 +21,7 @@ phenotyper <- function(data, markers, threshold, prob=0.95, epsilon=1e-6, itmax=
         init.clust[which(data[,i] < threshold[[i]]),i] <- 1
         init.clust[which(data[,i] > threshold[[i]]),i] <- 2
       }
-      
+
       # identify clusters for polymodal distributions
       if(length(threshold[[i]]) > 1)
       {
@@ -43,14 +40,14 @@ phenotyper <- function(data, markers, threshold, prob=0.95, epsilon=1e-6, itmax=
       }
     }
   }
-  
+
   # Fit models
   models <- vector(mode="list", length=length(markers))
   for(i in markers)
   {
-    
+
     # Getting initial parameters
-    
+
     ## Search for peaks, if peaks greater than expected, increase the amount of smoothing using the fudge factor.
     ### This will fail if length peaks is truely greater than expected and the user is forcing a smaller number of peaks
     fudge=0
@@ -67,7 +64,7 @@ phenotyper <- function(data, markers, threshold, prob=0.95, epsilon=1e-6, itmax=
       g <- 1
       peaks <- peaksNvalleys(data=data[,i], minDensityThreshold=minDensityThreshold, gridsize=14000, fudge=0.5)
     }
-    
+
     modpts <- matrix(ncol=g, nrow=1)
     dens <- KernSmooth::bkde(x=data[,i], kernel="normal", bandwidth=bw.select(x=data[,i], gridsize=14000), gridsize=14000)
     pro <- dens$y[peaks$peaks]/sum(dens$y[peaks$peaks])
@@ -78,7 +75,7 @@ phenotyper <- function(data, markers, threshold, prob=0.95, epsilon=1e-6, itmax=
     {
       modpts[,t] <- peaks$dens$x[peaks$peaks[t]]
       sigma[t] <- mad(x=data[which(init.clust[,i] == t),i], center=modpts[,t])
-      delta[,t] <- skew(x=data[which(init.clust[,i] == t),i])
+      delta[,t] <- psych::skew(x=data[which(init.clust[,i] == t),i])
     }
     if(g == 1)
     {
@@ -97,11 +94,16 @@ phenotyper <- function(data, markers, threshold, prob=0.95, epsilon=1e-6, itmax=
     }
     error <- 1
     restarts <- 0
-    
+
      while(error == 1 & restarts <= max.restarts)
     {
-      models[[i]] <- EmSkew(dat=data[,i],g=g, distr="mst", clust=i.clust, itmax=itmax, epsilon=epsilon, debug=F,
-                            init=list(pro=pro, modpts=modpts, mu=modpts, dof=dof, sigma=sigma, delta=delta), nrandom = 2)
+      models[[i]] <- EMMIXskew::EmSkew(dat=data[,i],g=g, distr="mst", clust=i.clust, itmax=itmax, epsilon=epsilon, debug=F,
+                                       init=list(pro=pro, modpts=modpts, mu=modpts, dof=dof, sigma=sigma, delta=delta), nrandom = 2)
+      pro <- models[[i]]$pro
+      modpts <- models[[i]]$pro
+      dof <- models[[i]]$dof
+      sigma <- models[[i]]$sigma
+      delta <- models[[i]]$delta
       if(models[[i]]$error == 1 & restarts <= max.restarts)
       {
         itmax <- itmax + 2000
@@ -134,7 +136,7 @@ phenotyper <- function(data, markers, threshold, prob=0.95, epsilon=1e-6, itmax=
       y[[j]]$density <- ddmst(dat=sort(y[[j]]$model[,1]), n=length(y[[j]]$model[,1]), p=1, mean=models[[i]][,j], del=models[[i]]$delta[j], cov=models[[i]]$sigma[[j]])*models[[i]]$pro[j]
     }
     models[[i]]$sim <- y
-    
+
     if(verbose == TRUE)
     {
       cat("Calculating phenotype of cells with posterior probability >", prob,"\n")
@@ -170,7 +172,7 @@ phenotyper <- function(data, markers, threshold, prob=0.95, epsilon=1e-6, itmax=
           pheno[which(models[[i]]$tau[,l] > prob & data[,i] > min(models[[i]]$modpts))] <- paste(i, paste(rep("+",l-1), collapse=""),sep="")
         }
       }
-      
+
     }
     models[[i]]$pheno <- pheno
     models[[i]]$pheno[which(models[[i]]$pheno == FALSE)] <- "outlier"

@@ -2,10 +2,6 @@ bw.select <- function (x, scalest = "mad", level = 2L, kernel = "normal",
           canonical = FALSE, gridsize = 401L, range.x = range(x),
           truncate = TRUE)
 {
-  dmode <- function(x, ...) {
-    den <- KernSmooth::bkde(x,kernel="normal", bandwidth=KernSmooth::dpik(x, gridsize=gridsize), gridsize=gridsize)
-    ( den$x[den$y==max(den$y)] )
-  }
 
   if (level > 5L)
     stop("Level should be between 0 and 5")
@@ -25,7 +21,7 @@ bw.select <- function (x, scalest = "mad", level = 2L, kernel = "normal",
   scalest <- switch(scalest, stdev = sqrt(var(x)),
                     iqr = (quantile(x, 3/4) - quantile(x, 1/4))/1.349,
                     minim = min((quantile(x, 3/4) - quantile(x, 1/4))/1.349, sqrt(var(x))),
-                    mad = mad(x, center=dmode(x)))
+                    mad = mad(x, center=dmode(x, bw.method="dpik", gridsize = gridsize)))
   if (scalest == 0)
     stop("scale estimate is zero for input data")
   sx <- (x - mean(x))/scalest
