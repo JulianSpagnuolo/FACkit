@@ -87,13 +87,14 @@ mem <- function(expdata, markers=NULL, cluster.id, ref.pop=NULL, IQR.thresh=NULL
     if(is.null(ref.pop))
     {
       MAGref <- matrix(nrow=n.pops, ncol=length(markers), dimnames=list(pop.names, markers))
-      for(i in 1:length(n.pops))
+      for(i in 1:n.pops)
       {
+        pop = pop.names[i]
         for(n in markers)
         {
-          MAGref[i,n] <- dmode(data[which(data$cluster.id != pop.names[i]),n], gridsize = 14000, fudge=0)
+          MAGref[i,n] <- dmode(data[which(data$cluster.id != pop),n], gridsize = 14000, fudge=0)
         }
-        IQRref[i,] = apply(data[which(data$cluster.id != pop.names[i]), markers],2,FUN=IQR,na.rm=TRUE)
+        IQRref[i,] = apply(data[which(data$cluster.id != pop), markers],2,FUN=IQR,na.rm=TRUE)
       }
     }
   }
