@@ -1,4 +1,4 @@
-som.tree <- function(data, markers, shape=c("rect","hex"), maxit=500, cores=1)
+som.tree <- function(data, markers, shape=c("rect","hex"), maxit=500, cores=1, graph.type="mst")
 {
   #' @author Julian Spagnuolo
   #' @title Build Growing Self-organising Map and Construct a Tree
@@ -7,6 +7,7 @@ som.tree <- function(data, markers, shape=c("rect","hex"), maxit=500, cores=1)
   #' @param shape vector determining the shape of SOM to build, either rectangular, "rect", or hexagonal, "hex".
   #' @param maxit number of iterations the SOM building function will use, default = 500.
   #' @param cores number of cores to using in distance computation. Default = 1, set higher if you have more than 1 cpu to use.
+  #' @param graph.type Type of graph to draw, either minimum spanning tree ("mst") or consensus hierarchical tree ("hrg"). Default is "mst".
   #'
   #'
   #' @importFrom amap Dist
