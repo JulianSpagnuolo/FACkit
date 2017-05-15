@@ -1,4 +1,4 @@
-som.tree <- function(data, markers, shape=c("rect","hex"), maxit=500, cores=1, graph.type="mst")
+som.tree <- function(data, markers, shape=c("rect","hex"), maxit=500, cores=1, build.tree=TRUE)
 {
   #' @author Julian Spagnuolo
   #' @title Build Growing Self-organising Map and Construct a Tree
@@ -7,29 +7,36 @@ som.tree <- function(data, markers, shape=c("rect","hex"), maxit=500, cores=1, g
   #' @param shape vector determining the shape of SOM to build, either rectangular, "rect", or hexagonal, "hex".
   #' @param maxit number of iterations the SOM building function will use, default = 500.
   #' @param cores number of cores to using in distance computation. Default = 1, set higher if you have more than 1 cpu to use.
-  #' @param graph.type Type of graph to draw, either minimum spanning tree ("mst") or consensus hierarchical tree ("hrg"). Default is "mst".
+  #' @param build.tree Logical, whether to construct and return a minimal spanning tree based on the graph produced from the SOM. Default is TRUE
   #'
   #'
   #' @importFrom amap Dist
 
   cat("Training SOM\n")
+  t1 <- Sys.time()
   som <- train.gsom(data=data[,markers], iterations = maxit, nhood = shape, keepdata = FALSE)
   cat("Mapping data to SOM\n")
   mapped <- map.gsom(gsom_object = som, df=data[,markers], retaindata = FALSE)
 
   cat("Building tree\n")
+  t2 <- Sys.time()
   adj.mat <- Dist(mapped$nodes$codes, method="euclidean", nbproc=cores)
-  full.graph <- graph.adjacency(adj.mat, mode="undirected")
-  if(graph.type == "hrg")
-  {
-    graph <- consensus_tree(graph=full.graph)
-    graph <- layout_with_fr(graph=graph, niter = maxit)
-  }
-  if(graph.type == "mst")
+  full.graph <- graph.adjacency(as.matrix(adj.mat), mode="undirected", weighted = TRUE)
+  tx <- Sys.time() - t2
+  cat("Tree built in ", round(as.numeric(tx), digits = 2),"seconds\n")
+
+  if(isTRUE(build.tree))
   {
     graph <- minimum.spanning.tree(full.graph)
-    graph <- layout_with_fr(graph=graph, niter=maxit)
   }
+  else
+  {
+    tx <- Sys.time() - t1
+    cat("completed in", round(as.numeric(tx), digits=2), "seconds\n")
+    return(full.graph)
+  }
+  tx <- Sys.time() - t1
+  cat("completed in", round(as.numeric(tx), digits=2), "seconds\n")
   return(graph)
 
 
