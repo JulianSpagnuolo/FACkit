@@ -15,6 +15,7 @@ som.tree <- function(data, markers, shape=c("rect","hex"), maxit=500, cores=1)
   cat("Training SOM\n")
   t1 <- Sys.time()
   som <- train.gsom(data=data[,markers], iterations = maxit, nhood = shape, keepdata = FALSE)
+  results$som <- som
   cat("Mapping data to SOM\n")
   results$map <- map.gsom(gsom_object = som, df=data[,markers], retaindata = FALSE)
 
