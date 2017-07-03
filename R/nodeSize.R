@@ -26,8 +26,8 @@ nodeSize <- function(somtree, reset=FALSE, maxNodeSize=15)
     shift <- min(t)
     scale <- max(t - shift)
     rescaled <- maxNodeSize * (t - shift)/scale
-    somtree.res$map$mapped$size <- numeric(nrow(somtree.res$map$mapped))
-    somtree.res$map$mapped$size[as.numeric(names(t))] <- rescaled
+    somtree.res$map$nodes$size <- numeric(nrow(somtree.res$map$mapped))
+    somtree.res$map$nodes$size[as.numeric(names(t))] <- rescaled
   }
   somtree.res
 }
