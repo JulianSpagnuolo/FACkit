@@ -1,4 +1,4 @@
-nodeSize <- function(somtree, reset=FALSE, maxNodeSize=15)
+nodeSize <- function(somtree, reset=FALSE, maxNodeSize=0.1)
   #'
   #' @title Scaled Node Sizes for growing SOM
   #' @author Julian Spagnuolo
@@ -17,17 +17,16 @@ nodeSize <- function(somtree, reset=FALSE, maxNodeSize=15)
 {
   if(reset == TRUE)
   {
-    somtree.res$map$nodes$size <- rep(maxNodeSize, nrow(somtree.res$map$mapped))
+    somtree.res$map$nodes$size <- as.vector(rep(maxNodeSize, nrow(somtree.res$map$nodes$codes)))
   }
   else
   {
     t <- table(somtree.res$map$mapped$bmn)
     t <- sqrt(t)
-    shift <- min(t)
-    scale <- max(t - shift)
-    rescaled <- maxNodeSize * (t - shift)/scale
+    scale <- max(t)
+    rescaled <- maxNodeSize * t/scale
     somtree.res$map$nodes$size <- numeric(nrow(somtree.res$map$nodes$codes))
-    somtree.res$map$nodes$size[as.numeric(names(t))] <- rescaled
+    somtree.res$map$nodes$size[as.numeric(names(t))] <- as.vector(rescaled)
   }
   somtree.res
 }
