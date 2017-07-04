@@ -8,7 +8,7 @@ plot.somtree <- function(somtree.res, type=c("stars","pies"), var.data, col.pal,
     oldpar <- graphics::par(no.readonly = TRUE)
     graphics::par(mar = c(1, 1, 1, 1))
     graphics::layout(matrix(c(1, 2), 1, 2, byrow = TRUE), widths = c(1, 2), heights = c(1))
-    starLegend(names(var.data), col.pal)
+    starLegend(colnames(var.data), col.pal)
     plot.igraph(somtree.res$mst,vertex.shape = "star", vertex.label = NA,
                 vertex.size = somtree.res$map$nodes$size, vertex.data = var.data, vertex.cP = col.pal,
                 vertex.scale = T, layout=layout, edge.lty = 1)

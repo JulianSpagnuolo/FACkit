@@ -1,5 +1,9 @@
 starLegend <- function (labels, colors = grDevices::rainbow(length(labels)), main = "")
 {
+  shiftFunction <- function (x, n)
+  {
+    c(x[(n + 1):length(x)], x[1:n])
+  }
   graphics::plot(1, type = "n", xlab = "", ylab = "", xlim = c(-10, 10), ylim = c(-3, 3),
                  asp = 1, bty = "n", xaxt = "n", yaxt = "n", main = main)
   graphics::stars(matrix(c(1:(2 * length(labels))), nrow = 2), col.segments = colors,
