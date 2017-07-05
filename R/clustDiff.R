@@ -57,7 +57,7 @@ clust.diff <- function(data, markers, cluster.id,test.method="Chisq", p.adj=TRUE
           x0 <- glm(formula=data[which(data$cluster.id %in% c(i,j)),m]~1, family=gaussian())
           # test against the null hypothesis.
           # return only the p.value of the test.
-          tests[i,j,m] <- anova(x0,x, test="Chisq")[2,5]
+          tests[i,j,m] <- anova(x0,x, test=test.method)[2,5]
         }
       }
     }
