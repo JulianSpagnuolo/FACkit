@@ -17,7 +17,7 @@ nodeSize <- function(somtree, reset=FALSE, maxNodeSize=0.1)
 {
   if(reset == TRUE)
   {
-    somtree.res$map$nodes$size <- as.vector(rep(maxNodeSize, nrow(somtree.res$map$nodes$codes)))
+    somtree$map$nodes$size <- as.vector(rep(maxNodeSize, nrow(somtree$map$nodes$codes)))
   }
   else
   {
@@ -25,10 +25,10 @@ nodeSize <- function(somtree, reset=FALSE, maxNodeSize=0.1)
     t <- sqrt(t)
     scale <- max(t)
     rescaled <- maxNodeSize * t/scale
-    somtree.res$map$nodes$size <- numeric(nrow(somtree.res$map$nodes$codes))
-    somtree.res$map$nodes$size[as.numeric(names(t))] <- as.vector(rescaled)
+    somtree$map$nodes$size <- numeric(nrow(somtree$map$nodes$codes))
+    somtree$map$nodes$size[as.numeric(names(t))] <- as.vector(rescaled)
   }
-  somtree.res
+  somtree
 }
 
 
