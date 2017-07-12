@@ -21,7 +21,7 @@ nodeSize <- function(somtree, reset=FALSE, maxNodeSize=0.1)
   }
   else
   {
-    t <- table(somtree.res$map$mapped$bmn)
+    t <- table(somtree$map$mapped$bmn)
     t <- sqrt(t)
     scale <- max(t)
     rescaled <- maxNodeSize * t/scale
