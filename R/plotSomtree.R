@@ -22,7 +22,7 @@ plot.somtree <- function(somtree, type=c("stars","pies"), var.data, col.pal, lay
                factor(var.data, levels = c(levels(var.data), "empty")))
     t[rowSums(t) == 0, "empty"] <- 1
     data <- unlist(apply(t, 1, list), recursive = FALSE)
-    colors <- list(c(ggsci::pal_startrek()(length(levels(var.data))), "#000000"))
+    colors <- list(c(col.pal, "#000000"))
     oldpar <- graphics::par(no.readonly = TRUE)
     graphics::par(mar = c(1, 1, 1, 1))
     graphics::layout(matrix(c(1, 2), 1, 2, byrow = TRUE), widths = c(1, 2), heights = c(1))
