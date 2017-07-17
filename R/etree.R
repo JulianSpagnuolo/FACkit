@@ -16,10 +16,11 @@ evtree <- function(df, markers, divisionThreshold = 120, divisionFactor = 4, eta
 #'
 #'
 {
-  out <-   .C("etreetrain", data = as.double(as.matrix(df[,markers])),
-              as.integer(divisionThreshold), as.integer(divisionFactor), as.double(eta0), as.double(sigma0),
-              as.double(tau1), as.double(tau2),  as.double(bddecay), as.integer(kmeanscount),
-              PACKAGE = "FACkit")
+  out <- .C("etreetrain", data = as.double(as.matrix(df[,markers])),
+            as.integer(divisionThreshold), as.integer(divisionFactor), as.double(eta0), as.double(sigma0),
+            as.double(tau1), as.double(tau2),  as.double(bddecay), as.integer(kmeanscount),
+            PACKAGE = "FACkit")
+  return(out)
 }
 
 
