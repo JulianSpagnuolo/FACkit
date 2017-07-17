@@ -1,4 +1,4 @@
-som.tree <- function(data, markers, shape=c("rect","hex"), maxit=500, cores=1, alpha=0.9, beta=0.5, spread=0.9, alg=c("kohonen","grow"), dim=c(NULL,NULL))
+som.tree <- function(data, markers, shape=c("rect","hex"), maxit=500, cores=1, alpha=0.9, beta=0.5, spread=0.9, alg=c("kohonen"), dim=c(NULL,NULL))
 {
   #' @author Julian Spagnuolo
   #' @title Build Growing Self-organising Map and Construct a Tree
@@ -10,43 +10,43 @@ som.tree <- function(data, markers, shape=c("rect","hex"), maxit=500, cores=1, a
   #' @param alpha discount factor for the learning rate during the growing phase of the training. Values should be between 0 and 1. Default = 0.9
   #' @param beta propagation rate. Determines the rate at which the error of a node, that cannot grow any nodes, is passed on to its neighbours. Suggested values may range between 0 and 1. Default = 0.5
   #' @param spread numeric value between 0 and 1, controls the rate at which new nodes are created in the growing SOM algorithm, lower values decrease the rate, higher ones increase it. Default is 0.9
-  #' @param alg character vector of length 1. Determines which SOM algorithm to use, choices include either Kohonen SOM, "kohonen" or Growing SOM, "grow".
+  #' @param alg character vector of length 1. Determines which SOM algorithm to use, choices include either Kohonen SOM, "kohonen" or Growing SOM, "grow" - GrowingSOM is not implemented - awaiting a bug fix and rerelease.
   #' @param dim integer vector of length 2. Determines dimensions of the SOM in the x and y dimension, respectively. These parameters must be set for the kohonen algorithm. If using the GrowSOM algorithm, defining dim will force the growing SOM to use a gridsize of dimension dim[1]*dim[2]. Default is c(NULL,NULL).
   #'
   #'
   #'
   #' @importFrom amap Dist
   results <- vector(mode="list")
-  if(method == "grow")
-  {
-    results$algorithm <- "GrowSOM"
-    cat("Training Growing SOM\n")
-
-    if(is.null(dim) == TRUE)
-    {
-      gridsize <- FALSE
-    }
-    else
-    {
-      gridsize <- dim[1]*dim[2]
-    }
-    t1 <- Sys.time()
-    results$som <- train.gsom(data=data[,markers], iterations = maxit, nhood = shape, keepdata = FALSE, alpha = alpha, beta=beta, spreadFactor = spread)
-    cat("Mapping data to SOM\n")
-    results$map <- map.gsom(gsom_object = som, df=data[,markers], retaindata = FALSE)
-
-    cat("Building tree\n")
-    t2 <- Sys.time()
-    adj.mat <- Dist(results$map$nodes$codes, method="euclidean", nbproc=cores)
-    results$full.graph <- graph.adjacency(as.matrix(adj.mat), mode="undirected", weighted = TRUE)
-    tx <- Sys.time() - t2
-    cat("Tree built in ", round(as.numeric(tx), digits = 2),"seconds\n")
-
-    results$mst <- minimum.spanning.tree(results$full.graph)
-
-    tx <- Sys.time() - t1
-    cat("completed in", round(as.numeric(tx), digits=2), "seconds\n")
-  }
+  #if(method == "grow")
+  #{
+  #  results$algorithm <- "GrowSOM"
+  #  cat("Training Growing SOM\n")
+  #
+  #  if(is.null(dim) == TRUE)
+  #  {
+  #    gridsize <- FALSE
+  #  }
+  #  else
+  #  {
+  #    gridsize <- dim[1]*dim[2]
+  #  }
+  #  t1 <- Sys.time()
+  #  results$som <- train.gsom(data=data[,markers], iterations = maxit, nhood = shape, keepdata = FALSE, alpha = alpha, beta=beta, spreadFactor = spread)
+  #  cat("Mapping data to SOM\n")
+  #  results$map <- map.gsom(gsom_object = som, df=data[,markers], retaindata = FALSE)
+  #
+  #  cat("Building tree\n")
+  #  t2 <- Sys.time()
+  #  adj.mat <- Dist(results$map$nodes$codes, method="euclidean", nbproc=cores)
+  #  results$full.graph <- graph.adjacency(as.matrix(adj.mat), mode="undirected", weighted = TRUE)
+  #  tx <- Sys.time() - t2
+  #  cat("Tree built in ", round(as.numeric(tx), digits = 2),"seconds\n")
+  #
+  #  results$mst <- minimum.spanning.tree(results$full.graph)
+  #
+  #  tx <- Sys.time() - t1
+  #  cat("completed in", round(as.numeric(tx), digits=2), "seconds\n")
+  #}
   if(method == "kohonen")
   {
     if(is.null(dim))
