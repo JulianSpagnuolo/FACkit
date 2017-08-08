@@ -17,7 +17,7 @@ som.tree <- function(data, markers, shape=c("rect","hex"), maxit=500, cores=1, a
   #'
   #' @importFrom amap Dist
   results <- vector(mode="list")
-  #if(method == "grow")
+  #if(alg == "grow")
   #{
   #  results$algorithm <- "GrowSOM"
   #  cat("Training Growing SOM\n")
@@ -47,7 +47,7 @@ som.tree <- function(data, markers, shape=c("rect","hex"), maxit=500, cores=1, a
   #  tx <- Sys.time() - t1
   #  cat("completed in", round(as.numeric(tx), digits=2), "seconds\n")
   #}
-  if(method == "kohonen")
+  if(alg == "kohonen")
   {
     if(is.null(dim))
     {
@@ -59,11 +59,11 @@ som.tree <- function(data, markers, shape=c("rect","hex"), maxit=500, cores=1, a
     cat("Training Kohonen SOM\n")
     if(cores > 1)
     {
-      method = "pbatch"
+      mode = "pbatch"
     }
     else
     {
-      method = "online"
+      mode = "online"
     }
     if(shape == "hex")
     {
@@ -73,7 +73,7 @@ som.tree <- function(data, markers, shape=c("rect","hex"), maxit=500, cores=1, a
     {
       shape = "rectangular"
     }
-    results$som <- kohonen::som(X=data[,markers], rlen=maxit, alpha=c(0.05, 0.01), method=method, cores=cores, dist.fcts="euclidean", grid=somgrid(xdim=dim[1], ydim=dim[2], topo=shape), keep.data=F)
+    results$som <- kohonen::som(X=data[,markers], rlen=maxit, alpha=c(0.05, 0.01), mode=mode, cores=cores, dist.fcts="euclidean", grid=somgrid(xdim=dim[1], ydim=dim[2], topo=shape), keep.data=F)
     cat("Mapping data to SOM\n")
     results$map <- kohonen::map(x=results$som, newdata=data[,markers])
 
