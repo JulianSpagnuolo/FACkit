@@ -11,11 +11,11 @@ thresholder <- function(data, markers, thresholds)
   {
     for(n in markers)
     {
-      if(data[i,n] >= threshold[n])
+      if(data[i,n] >= thresholds[n])
       {
         results[i,n] <- 1
       }
-      if(data[i,n] < threshold[n])
+      if(data[i,n] < thresholds[n])
       {
         results[i,n] <- 0
       }
