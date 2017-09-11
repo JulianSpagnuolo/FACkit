@@ -55,7 +55,7 @@ plot.somtree <- function(somtree, type=c("stars","pies"), var.data, col.pal, lay
 
     if(type == "pies")
     {
-      t <- table(factor(expdata.gsom.koh$map$unit.classif, levels = seq_along(somtree$map$nodes$size)),
+      t <- table(factor(somtree$map$unit.classif, levels = seq_along(somtree$map$nodes$size)),
                  factor(var.data, levels = c(levels(var.data), "empty")))
       t[rowSums(t) == 0, "empty"] <- 1
       data <- unlist(apply(t, 1, list), recursive = FALSE)
