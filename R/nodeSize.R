@@ -41,7 +41,7 @@ nodeSize <- function(somtree, reset=FALSE, maxNodeSize=0.1)
     }
     else
     {
-      t <- table(expdata.gsom.koh$map$unit.classif)
+      t <- table(somtree$map$unit.classif)
       t <- sqrt(t)
       scale <- max(t)
       rescaled <- maxNodeSize * t/scale
