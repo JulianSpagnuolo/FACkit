@@ -22,7 +22,9 @@ posterior <- function(model.params, data)
     post1 <- exp(ll[,1]-max(ll[,1]))/sum(exp(ll[,1]-max(ll[,1])))
     post2 <- exp(ll[,2]-max(ll[,2]))/sum(exp(ll[,2]-max(ll[,2])))
 
+    results[[i]]$dens1 <- ll[,1]
     results[[i]]$post1 <- post1/max(post1)
+    results[[i]]$dens2 <- ll[,2]
     results[[i]]$post2 <- post2/max(post2)
   }
   return(results)
