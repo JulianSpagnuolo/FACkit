@@ -30,7 +30,7 @@ plot.somtree <- function(somtree, type=c("stars","pies"), var.data, col.pal, lay
       graphics::layout(matrix(c(1, 2), 1, 2, byrow = TRUE), widths = c(1, 2), heights = c(1))
       graphics::plot.new()
       legend("center", legend = levels(var.data), fill = colors[[1]], cex = 0.7, ncol = 1, bty = "n")
-      igraph::plot.igraph(somtree$mst, vertex.shape = "pie", vertex.label = NA, vertex.size = 5, vertex.pie = data, vertex.pie.color = colors, layout = layout, edge.lty = 1)
+      igraph::plot.igraph(somtree$mst, vertex.shape = "pie", vertex.label = NA, vertex.size = somtree$map$nodes$size, vertex.pie = data, vertex.pie.color = colors, layout = layout, edge.lty = 1)
       graphics::par(oldpar)
       graphics::layout(1)
     }
