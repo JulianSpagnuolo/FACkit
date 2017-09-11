@@ -50,6 +50,24 @@ nodeSize <- function(somtree, reset=FALSE, maxNodeSize=0.1)
     }
   }
 
+  if(somtree$algorithm == "dm")
+  {
+    somtree$map$nodes <- list()
+    if(reset == TRUE)
+    {
+      somtree$map$nodes$size <- as.vector(rep(maxNodeSize, nrow(somtree$som$codes[[1]])))
+    }
+    else
+    {
+      t <- table(somtree$map$unit.classif)
+      t <- sqrt(t)
+      scale <- max(t)
+      rescaled <- maxNodeSize * t/scale
+      somtree$map$nodes$size <- numeric(nrow(somtree$som$codes[[1]]))
+      somtree$map$nodes$size[as.numeric(names(t))] <- as.vector(rescaled)
+    }
+  }
+
   somtree
 }
 
