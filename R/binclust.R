@@ -26,6 +26,9 @@ binclust <- function(data, markers, nbins=100, distmet="eucl", percentiles=FALSE
     }
   }
 
+  # initialise the bin list
+  binlist <- list()
+
   for(i in 1:nrow(data)) # iterate through all data points
   {
     # for each datapoint make a container for the nearest bin found
@@ -42,9 +45,6 @@ binclust <- function(data, markers, nbins=100, distmet="eucl", percentiles=FALSE
         temp.bin[j] <- bin.mat[dist.index,j]
       }
     }
-
-    # initialise the bin list
-    binlist <- list()
 
     if(length(binlist) == 0) # initialise the first entry
     {
