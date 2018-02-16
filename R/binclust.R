@@ -48,7 +48,7 @@ binclust <- function(data, markers, nbins=100, distmet="eucl", percentiles=FALSE
 
     if(length(binlist) == 0) # initialise the first entry
     {
-      binlist <- list(bin=temp.bin, members=c(i))
+      binlist[[1]] <- list(bin=temp.bin, members=c(i))
     }
     else
     {
@@ -57,11 +57,17 @@ binclust <- function(data, markers, nbins=100, distmet="eucl", percentiles=FALSE
         if(isTRUE(identical(binlist[[n]]$bin, temp.bin)))
         {
           binlist[[n]]$members <- append(x = binlist[[n]]$members, values = i)
+          new.bin <- FALSE
+          break
         }
         else
         {
-          binlist <- list(binlist, list(bin=temp.bin, members=c(i)))
+          new.bin <- TRUE
         }
+      }
+      if(isTRUE(new.bin))
+      {
+        binlist[[length(binlist) + 1]] <- list(bin=temp.bin, members=c(i))
       }
     }
   }
