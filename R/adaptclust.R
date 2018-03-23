@@ -2,7 +2,7 @@ adapt.clust <- function(data, nbins=4, markers, dist="eucl", growfact=3, dist.th
 {
   #' @author Julian Spagnuolo
   #' @title Clustering by Binning
-  #' @description Clusters large datasets that cannot ordinarily be clustered by distance calculation because of size limitations. It works by creating bins into which observations are placed by nearest distance, currently euclidean distance is implemented.
+  #' @description Cluster large datasets that cannot ordinarily be clustered by distance calculation because of size limitations. It works by creating bins into which observations are placed by nearest distance, currently euclidean distance is implemented.
   #' @param data data.frame or matrix containing the data to be clustered
   #' @param nbins number of bins created at the start
   #' @param markers vector of marker names in data to be clustered
