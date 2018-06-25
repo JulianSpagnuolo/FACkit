@@ -36,13 +36,13 @@ cutfind2 <- function(x, markers, npeaks=NULL, DensityThreshold=NULL, gridsize=14
   if(is.null(DensityThreshold))
   {
     cat("Provide a vector of Density Thresholds for each marker (or pick a point below the lowest peak you wish to identify)")
-    break()
+    break ## could replace with stop()
   }
 
   if(length(DensityThreshold) != length(markers))
   {
     cat("Missing a Density Threshold in your vector")
-    break()
+    break ## could replace with stop()
   }
 
   cutoffs <- vector(mode="list", length=length(markers))
