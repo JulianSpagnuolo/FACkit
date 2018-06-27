@@ -1,10 +1,11 @@
-adapt.clust <- function(data, nbins=4, markers, dist="eucl", growfact=3, dist.thresh=4, maxit=100, minpts = 5)
+adapt.clust <- function(data, nbins=4, bin.defs=NULL, markers, dist="eucl", growfact=3, dist.thresh=4, maxit=100, minpts = 5)
 {
   #' @author Julian Spagnuolo
   #' @title Clustering by Binning
   #' @description Cluster large datasets that cannot ordinarily be clustered by distance calculation because of size limitations. It works by creating bins into which observations are placed by nearest distance, currently euclidean distance is implemented.
   #' @param data data.frame or matrix containing the data to be clustered
-  #' @param nbins number of bins created at the start
+  #' @param nbins number of bins created at the start. If set to NULL and bin.mat is given, then starting nodes will be initialised using a perumuation matrix based on the positive and negative expression values given in bin.mat. Default is 4.
+  #' @param bin.defs 2*length(markers) numeric matrix giving the expression values for positive and negative phenotypes for each marker. If set to NULL, the number of initial bins will be determined by nbins using the density distribution of the data. Default is NULL.
   #' @param markers vector of marker names in data to be clustered
   #' @param dist character vector indicating which distance metric to be used; one of "eucl" = euclidean, "jacc" = Jaccard.
   #' @param growfact numeric indicates the number of new nodes created if average dist is above threshold
@@ -12,20 +13,35 @@ adapt.clust <- function(data, nbins=4, markers, dist="eucl", growfact=3, dist.th
   #' @param maxit integer maximum allowed interations of the algorithm
   #' @param minpts minimum node membership required for resampling the node def from the old node members.
   #'
-  #'
+  #' @import gtools
 
   ## First create the bins
   cat("Initialising\n")
-  bin.mat <- matrix(data = NA, nrow = nbins, ncol = length(markers), dimnames = list(c(1:nbins),markers))
-  for(i in markers)
+
+  if(is.null(bin.defs))
   {
-    x <- density(data[,i], n = round(sqrt(nrow(data)), digits = 0))
-    bin.mat[,i] <- sample(x = x$x, size = nbins, prob = x$y)
+    bin.mat <- matrix(data = NA, nrow = nbins, ncol = length(markers), dimnames = list(c(1:nbins),markers))
+    for(i in markers)
+    {
+      x <- density(data[,i], n = round(sqrt(nrow(data)), digits = 0))
+      bin.mat[,i] <- sample(x = x$x, size = nbins, prob = x$y)
+    }
+  }
+  else
+  {
+    cat("\nMaking Permutation Matrix")
+    bin.mat <- permutations(n=2, r=length(markers), v=c(0,1), repeats.allowed=T)
+    for(i in 1:length(markers))
+    {
+      bin.mat[which(bin.mat[,i] == 0),i] <- bin.defs["0",i]
+      bin.mat[which(bin.mat[,i] == 1),i] <- bin.defs["1",i]
+    }
   }
 
   ## Match the data points to the best bin
 
-  nodes <- vector(mode="list", length=nbins)
+  cat("\nSetting up nodes")
+  nodes <- vector(mode="list", length=nrow(bin.mat))
   for(i in 1:length(nodes))
   {
     nodes[[i]]$node <- bin.mat[i,]
@@ -34,14 +50,18 @@ adapt.clust <- function(data, nbins=4, markers, dist="eucl", growfact=3, dist.th
   }
 
 
+  cat("\nPopulating nodes")
   for(i in 1:nrow(data))
   {
     dists <- apply(X=bin.mat, MARGIN = 1, FUN= function(x,y) {sqrt(sum((x-y)^2))}, y=data[i,markers])
-    nodes[[as.numeric(names(dists[which(dists == min(dists))]))]]$datapoint <- append(x = nodes[[as.numeric(names(dists[which(dists == min(dists))]))]]$datapoint, values = i)
-    nodes[[as.numeric(names(dists[which(dists == min(dists))]))]]$dist <- append(x = nodes[[as.numeric(names(dists[which(dists == min(dists))]))]]$dist, values = as.numeric(dists[which(dists == min(dists))]))
+    nodes[[which(dists == min(dists))]]$datapoint <- append(x = nodes[[which(dists == min(dists))]]$datapoint, values = i)
+    nodes[[which(dists == min(dists))]]$dist <- append(x = nodes[[which(dists == min(dists))]]$dist, values = dists[which(dists == min(dists))])
   }
 
+  cat("\nCulling initial nodes")
 
+
+  cat("\nEntering Grow Phase")
   iter <- 0
   while(iter < maxit)
   {
@@ -92,7 +112,7 @@ adapt.clust <- function(data, nbins=4, markers, dist="eucl", growfact=3, dist.th
     # Reset names of bin.mat and remove old nodes.
     dimnames(bin.mat) <- list(1:nrow(bin.mat), markers)
     rm(nodes)
-    nodes <- vector(mode="list", length=nbins)
+    nodes <- vector(mode="list", length=nrow(bin.mat))
     for(i in 1:length(nodes))
     {
       nodes[[i]]$node <- bin.mat[i,]
@@ -103,8 +123,8 @@ adapt.clust <- function(data, nbins=4, markers, dist="eucl", growfact=3, dist.th
     for(i in 1:nrow(data))
     {
       dists <- apply(X=bin.mat, MARGIN = 1, FUN= function(x,y) {sqrt(sum((x-y)^2))}, y=data[i,markers])
-      nodes[[as.numeric(names(dists[which(dists == min(dists))]))]]$datapoint <- append(x = nodes[[as.numeric(names(dists[which(dists == min(dists))]))]]$datapoint, values = i)
-      nodes[[as.numeric(names(dists[which(dists == min(dists))]))]]$dist <- append(x = nodes[[as.numeric(names(dists[which(dists == min(dists))]))]]$dist, values = as.numeric(dists[which(dists == min(dists))]))
+      nodes[[which(dists == min(dists))]]$datapoint <- append(x = nodes[[which(dists == min(dists))]]$datapoint, values = i)
+      nodes[[which(dists == min(dists))]]$dist <- append(x = nodes[[which(dists == min(dists))]]$dist, values = dists[which(dists == min(dists))])
     }
 
 

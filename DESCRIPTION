@@ -11,4 +11,5 @@ Encoding: UTF-8
 LazyData: true
 Imports: KernSmooth,EMMIXskew,psych,igraph,kohonen,Rcpp
 Recommends: ggplot,ggsci,ggalt,FlowSOM,pals
-Depends: KernSmooth,EMMIXskew,psych,amap,igraph,kohonen,Rcpp,dbscan
+Depends: KernSmooth,EMMIXskew,psych,amap,igraph,kohonen,dbscan,gtools
+LinkingTo: Rcpp
