@@ -29,44 +29,49 @@ adapt.clust <- function(data, nbins=4, bin.defs=NULL, markers, dist="eucl", grow
   }
   else
   {
-    cat("\nMaking Permutation Matrix")
+    cat("\nSetting up initial nodes")
     bin.mat <- permutations(n=2, r=length(markers), v=c(0,1), repeats.allowed=T)
     for(i in 1:length(markers))
     {
       bin.mat[which(bin.mat[,i] == 0),i] <- bin.defs["0",i]
       bin.mat[which(bin.mat[,i] == 1),i] <- bin.defs["1",i]
     }
+    nbins <- nrow(bin.mat)
   }
 
-  ## Match the data points to the best bin
-
-  cat("\nSetting up nodes")
-  nodes <- vector(mode="list", length=nrow(bin.mat))
-  for(i in 1:length(nodes))
-  {
-    nodes[[i]]$node <- bin.mat[i,]
-    nodes[[i]]$datapoint <- vector("integer")
-    nodes[[i]]$dist <- vector("numeric")
-  }
-
-
+  cat("\n",nrow(bin.mat),"Initial nodes created")
   cat("\nPopulating nodes")
-  for(i in 1:nrow(data))
-  {
-    dists <- apply(X=bin.mat, MARGIN = 1, FUN= function(x,y) {sqrt(sum((x-y)^2))}, y=data[i,markers])
-    nodes[[which(dists == min(dists))]]$datapoint <- append(x = nodes[[which(dists == min(dists))]]$datapoint, values = i)
-    nodes[[which(dists == min(dists))]]$dist <- append(x = nodes[[which(dists == min(dists))]]$dist, values = dists[which(dists == min(dists))])
-  }
+  node.dists <- bindist(binmat=bin.mat, data=as.matrix(data[,markers]))
 
   cat("\nCulling initial nodes")
+  keep <- vector()
+  for(i in 1:length(node.dists$node.pops))
+  {
+    if(!is.null(node.dists$node.pops[[i]]))
+    {
+      keep <- append(x = keep, values = i)
+    }
+  }
+  bin.mat <- bin.mat[keep,]
+  cat("\n",nrow(bin.mat),"Initial nodes populated")
 
+  nodes <- vector(mode="list", length=nrow(bin.mat))
+  for(i in 1:length(keep))
+  {
+    nodes[[i]]$node <- bin.mat[i,]
+    nodes[[i]]$datapoint <- node.dists$node.pops[[keep[i]]]
+    nodes[[i]]$dist <- node.dists$node.dists[[keep[i]]]
+  }
+  nbins <- nrow(bin.mat)
+  rm(node.dists)
 
   cat("\nEntering Grow Phase")
   iter <- 0
   while(iter < maxit)
   {
-    cat("Growing\n")
+    cat("\nGrowing")
     # reset the number of bins and the bin matrix
+
     nbins <- 0
     bin.mat <- matrix(data=NA, nrow=0, ncol=length(markers), dimnames = list(c(),markers))
 
@@ -108,26 +113,32 @@ adapt.clust <- function(data, nbins=4, bin.defs=NULL, markers, dist="eucl", grow
         }
       }
     }
+    rm(nodes)
 
     # Reset names of bin.mat and remove old nodes.
     dimnames(bin.mat) <- list(1:nrow(bin.mat), markers)
-    rm(nodes)
+
+    node.dists <- bindist(binmat=bin.mat, data=as.matrix(data[,markers]))
+
+    keep <- vector()
+    for(i in 1:length(node.dists$node.pops))
+    {
+      if(!is.null(node.dists$node.pops[[i]]))
+      {
+        keep <- append(x = keep, values = i)
+      }
+    }
+    bin.mat <- bin.mat[keep,]
+
     nodes <- vector(mode="list", length=nrow(bin.mat))
-    for(i in 1:length(nodes))
+    for(i in 1:length(keep))
     {
       nodes[[i]]$node <- bin.mat[i,]
-      nodes[[i]]$datapoint <- vector("integer")
-      nodes[[i]]$dist <- vector("numeric")
+      nodes[[i]]$datapoint <- node.dists$node.pops[[keep[i]]]
+      nodes[[i]]$dist <- node.dists$node.dists[[keep[i]]]
     }
+    rm(node.dists)
     cat("Size of SOM is now ",length(nodes),"\n")
-    for(i in 1:nrow(data))
-    {
-      dists <- apply(X=bin.mat, MARGIN = 1, FUN= function(x,y) {sqrt(sum((x-y)^2))}, y=data[i,markers])
-      nodes[[which(dists == min(dists))]]$datapoint <- append(x = nodes[[which(dists == min(dists))]]$datapoint, values = i)
-      nodes[[which(dists == min(dists))]]$dist <- append(x = nodes[[which(dists == min(dists))]]$dist, values = dists[which(dists == min(dists))])
-    }
-
-
 
     iter <- iter + 1
   }
