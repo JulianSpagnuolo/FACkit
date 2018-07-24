@@ -42,7 +42,8 @@ ui <- dashboardPage(dashboardHeader(title="FACkit Analysis"),
                     dashboardSidebar(sidebarMenu(menuItem("Home", tabName = "home", icon=icon("home", lib = "font-awesome"), selected=TRUE),
                                                  menuItem("Data Import", tabName = "data_import", icon=icon("import", lib = "glyphicon")),
                                                  menuItem("Transformation", tabName = "transformation", icon=icon("equalizer", lib = "glyphicon")),
-                                                 menuItem("Dimensional Reduction", tabName = "dim_red", icon=icon("sitemap", lib = "font-awesome")))
+                                                 menuItem("Dimensional Reduction", tabName = "dim_red", icon=icon("sitemap", lib = "font-awesome")),
+                                                 menuItem("Cluster Enrichment", tabName = "clust_enrich", icon=icon("search", lib = "font-awesome")))
                     ),
                     dashboardBody(
                       tabItems(
@@ -119,6 +120,31 @@ ui <- dashboardPage(dashboardHeader(title="FACkit Analysis"),
                                   box(plotlyOutput(outputId = "tsne.plot"), width = 7, height = "700px"),
                                   box(title = "tSNE Plot Parameters", width = 4,
                                       selectInput("tsne.col", label = "Colour Variable", choices = list(), selected=1, multiple = FALSE))
+                                ),
+                                h2("DBscan - Clustering"), ## TODO Implement DBScan clustering
+                                fluidRow(
+                                  box()
+                                ),
+                                fluidRow( ## TODO Implement cluster refinement
+                                  box()
+                                )
+                        ),
+                        tabItem(tabName = "clust_enrich",
+                                h2(""),
+                                fluidRow(
+                                  h3(""),
+                                  uiOutput("")
+                                ),
+                                fluidRow(
+                                  box(),
+                                  box()
+                                ),
+                                h2(""),
+                                fluidRow(
+                                  box()
+                                ),
+                                fluidRow(
+                                  box()
                                 )
                         )
                       )
@@ -461,12 +487,25 @@ server <- function(input, output, session) {
 
       expdata$tsne <- data.frame(tsne1=tsne[,1], tsne2=tsne[,2])
 
+      tsne <- fftRtsne(X = expdata[["norm.data"]][,c(expdata[["tsne.markers"]])],
+                       dims = 1, perplexity = input$tsne.perp, check_duplicates = FALSE, max_iter = input$tsne.iter,
+                       fft_not_bh = input$tsne.mode, ann_not_vptree = input$tsne.tree, stop_lying_iter = input$tsne.stop.lying.iter,
+                       exaggeration_factor = input$tsne.early.exag, no_momentum_during_exag = FALSE, start_late_exag_iter = input$tsne.start.late.exag,
+                       late_exag_coeff = input$tsne.late.exag, rand_seed = input$seed)
+
+      expdata$tsne1d <- data.frame(tsne1=tsne[,1])
+
     }else{
       "Rtsne" %>% print
       tsne <- Rtsne(X = expdata[["norm.data"]][,c(expdata[["tsne.markers"]])], dims = input$tsne.dim, perplexity = input$tsne.perp, check_duplicates = FALSE, max_iter = input$tsne.iter,
                     stop_lying_iter = input$tsne.stop.lying.iter, exaggeration_factor = input$tsne.early.exag)
 
       expdata$tsne <- data.frame(tsne1=tsne$Y[,1], tsne2=tsne$Y[,2])
+
+      tsne <- Rtsne(X = expdata[["norm.data"]][,c(expdata[["tsne.markers"]])], dims = 1, perplexity = input$tsne.perp, check_duplicates = FALSE, max_iter = input$tsne.iter,
+                    stop_lying_iter = input$tsne.stop.lying.iter, exaggeration_factor = input$tsne.early.exag)
+
+      expdata$tsne1d <- data.frame(tsne1=tsne$Y[,1])
     }
 
     "finished tsne" %>% print
