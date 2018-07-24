@@ -20,7 +20,11 @@ library(plotly)
 library(pheatmap)
 
 library(FACkit)
-library(MEM) ## TODO Add MEM to FACkit properly. Rewrite the function to make it more compatible and better.
+library(MEM)
+## TODO Add MEM to FACkit properly. Rewrite the function to make it more compatible and better.
+## TODO MEM: allow use of character vectors as the cluster column
+## TODO MEM: allow a vector of column names to choose the desired markeres instead of shitty interactive mode
+## TODO MEM: alter plotting function... or change to use pheatmap.... something.
 
 # load the faster fftRtsne if it exists in user lib, else load the standard Rtsne
 if(length(find.package("fftRtsne", quiet = T)) != 0){
@@ -28,13 +32,6 @@ if(length(find.package("fftRtsne", quiet = T)) != 0){
 }else{
   library(Rtsne)
 }
-
-## TODO MEM: allow use of character vectors as the cluster column
-## TODO MEM: allow a vector of column names to choose the desired markeres instead of shitty interactive mode
-## TODO MEM: alter plotting function... or change to use pheatmap.... something.
-
-
-## TODO Add method to detect fftwRtsne package and load it instead of Rtsne.
 
 ## TODO Make the layout pretty with shinydashboards.
 ## TODO Add documentation guides in the boxes
@@ -108,7 +105,6 @@ ui <- dashboardPage(dashboardHeader(title="FACkit Analysis"),
                                       width = 12
                                   )
                                 ),
-                                ## TODO implement the MEM step
                                 h4("MEM Results"),
                                 fluidRow(box(plotOutput("mem.median"), title = "MEM Group Median Expression"),
                                          box(plotOutput("mem.results"), title="MEM Marker Enrichment Score"))
@@ -120,7 +116,7 @@ ui <- dashboardPage(dashboardHeader(title="FACkit Analysis"),
                                   uiOutput("tsne.ui")
                                 ),
                                 fluidRow(
-                                  box(plotlyOutput(outputId = "tsne.plot", width = "100%", height = "100%"), width = 8, height = "800px"),
+                                  box(plotlyOutput(outputId = "tsne.plot"), width = 7, height = "700px"),
                                   box(title = "tSNE Plot Parameters", width = 4,
                                       selectInput("tsne.col", label = "Colour Variable", choices = list(), selected=1, multiple = FALSE))
                                 )
@@ -163,17 +159,15 @@ server <- function(input, output, session) {
     data.folder$files <- data.files
   })
 
-  output$table <- renderDT(data.folder[["files"]], editable = TRUE, selection = "none", server = TRUE)
-
+  output$table <- renderDT(data.folder[["files"]], editable = TRUE, selection = "none", server = TRUE, options=list(dom="ltip"))
   proxy = dataTableProxy("table")
   observeEvent(input$table_cell_edit, {
     info = input$table_cell_edit
-    str(info)
     i = info$row
     j = info$col
     v = info$value
     data.folder[["files"]][i, j] <<- DT::coerceValue(v, data.folder[["files"]][i, j])
-    replaceData(proxy, data.folder[["files"]],resetPaging = FALSE)  # important
+    replaceData(proxy, data.folder[["files"]], resetPaging = FALSE)
   })
 
 
@@ -182,7 +176,6 @@ server <- function(input, output, session) {
     path <- input$file1$datapath
     if(is.null(path)){return(NULL)}
     header <- vector(length=length(path), mode="list")
-    str(path)
     for(i in 1:length(path))
     {
       header[[i]] <- read.csv(file = path[i],nrows = 1, header = FALSE, stringsAsFactors = FALSE)
@@ -215,7 +208,7 @@ server <- function(input, output, session) {
     rm(col.names);rm(header)
   })
 
-  output$column.names <- renderDT(data.folder[["col.names"]], editable = TRUE, selection = "none", server = TRUE)
+  output$column.names <- renderDT(data.folder[["col.names"]], editable = TRUE, selection = "none", server = TRUE, options=list(dom="ltip"))
   proxy.cols = dataTableProxy("column.names")
   observeEvent(input$column.names_cell_edit, {
     info = input$column.names_cell_edit
@@ -223,9 +216,7 @@ server <- function(input, output, session) {
     j = info$col
     v = info$value
     data.folder[["col.names"]][i, j] <<- DT::coerceValue(v, data.folder[["col.names"]][i, j])
-    replaceData(proxy.cols, data.folder[["col.names"]],resetPaging = FALSE)  # important
-    str(data.folder[["col.names"]])
-
+    replaceData(proxy.cols, data.folder[["col.names"]], resetPaging = FALSE)
   })
 
   ## Data Upload
@@ -246,7 +237,6 @@ server <- function(input, output, session) {
     else{
       column.names <- as.data.frame(data.folder[["col.names"]], stringsAsFactors=FALSE)
     }
-    str(column.names[1,])
     n.cols <- input$n.cond.cols
     raw.data.list <- vector(length=length(paths), mode="list")
     metadata.list <- vector(length=length(paths), mode="list")
@@ -284,6 +274,8 @@ server <- function(input, output, session) {
       expdata$markers.raw <- colnames(raw.data)
     }
 
+    str(raw.data) %>% print
+
     updateSelectInput(session, "raw.dist.marker",
                       choices = as.vector(expdata[["markers.raw"]]),
                       selected = as.vector(expdata[["markers.raw"]])[1])
@@ -304,7 +296,6 @@ server <- function(input, output, session) {
 
 
   # Data Transformation
-
   ## Choose Marker to Plot Density Distribution of Raw Expression Values
   observeEvent(input$raw.dist.marker,{
     marker <- input$raw.dist.marker
@@ -326,7 +317,8 @@ server <- function(input, output, session) {
   })
 
   ## Define Cutoff Value by Manually Entering in DataTable
-  output$cutoffs <- renderDT(expdata[["cutoffs"]], editable = TRUE, selection = "none", server = TRUE)
+  ## TODO make this DT show only 3 sig figs.
+  output$cutoffs <- renderDT(expdata[["cutoffs"]], editable = TRUE, selection = "none", server = TRUE, options=list(dom="ltip", digits=3))
   proxy.cols = dataTableProxy("cutoffs")
   observeEvent(input$cutoffs_cell_edit, {
     info = input$cutoffs_cell_edit
@@ -334,18 +326,14 @@ server <- function(input, output, session) {
     j = info$col
     v = as.numeric(info$value)
     expdata[["cutoffs"]][i, j] <<- DT::coerceValue(v, expdata[["cutoffs"]][i, j])
-    replaceData(proxy.cols, expdata[["cutoffs"]],resetPaging = FALSE)  # important
-    str(expdata[["cutoffs"]])
+    replaceData(proxy.cols, expdata[["cutoffs"]], resetPaging = FALSE)
   })
 
   ## Run Transformation
-  observeEvent(input$transform,{
+  observeEvent(input$transform, {
     norm.data <- facsnorm(x=expdata[["raw.data"]][,colnames(expdata[["cutoffs"]])], cutoffs = as.numeric(expdata[["cutoffs"]][1,]), asinCofac = input$asincofac, method = "arcsin")
 
-    metadata <- matrix(nrow=nrow(norm.data), ncol=length(expdata[["metadata"]]), dimnames=list(c(1:nrow(norm.data)), c(expdata[["metadata"]])),
-                       data=as.vector(expdata[["raw.data"]][,expdata[["metadata"]]]), byrow = TRUE)
-
-    norm.data <- cbind(norm.data, metadata)
+    norm.data <- cbind(norm.data, expdata[["raw.data"]][,expdata[["metadata"]]])
     rownames(norm.data) <- 1:nrow(norm.data)
     expdata$norm.data <- norm.data
     expdata$bin.defs <- matrix(nrow=2, ncol=length(expdata[["markers.raw"]]), dimnames = list(c("pos","neg"),c(expdata[["markers.raw"]])))
@@ -390,8 +378,7 @@ server <- function(input, output, session) {
 
   # Choose Conditional Column for MEM
   output$mem.groups <- renderUI({
-    selectInput(inputId = "mem.groups", label = "Select Conditions", multiple = FALSE, width = "25%",
-                choices = expdata[["metadata"]])
+    selectInput(inputId = "mem.groups", label = "Select Conditions", multiple = FALSE, width = "25%", choices = expdata[["metadata"]])
   })
 
   # Run MEM and plot
@@ -399,15 +386,8 @@ server <- function(input, output, session) {
     c("formatting data for MEM") %>% print
 
     mem.data <- expdata[["norm.data"]][,c(expdata[["markers.mem"]])] ## TODO once MEM function is rewritten, replace with: expdata[["norm.data"]][,c(expdata[["tsne.markers"]], input$mem.groups)]
-    c("Collected Expression Data, now adding clust column") %>% print
-    input$mem.groups %>% print
-    colnames(mem.data) %>% print
-    head(expdata[["norm.data"]][,c(input$mem.groups)]) %>% print ### BUG This appears to output a list object ... why?!?!
-    table(is.na(expdata[["norm.data"]][,c(input$mem.groups)]))
-    ## BUG this step is taking way too long for some reason when there are more than one cond column
     mem.data$cluster <- as.numeric(as.factor(expdata[["norm.data"]][,c(input$mem.groups)])) ## TODO once MEM function is rewritten change this so that the expdata is directly input into the call to MEM without changing cluster to a factor and numeric... etc
 
-    head(mem.data) %>% print
     c("Running MEM") %>% print
     if(is.na(input$mem.iqr))
     {
@@ -438,8 +418,8 @@ server <- function(input, output, session) {
         numericInput(inputId = "tsne.dim", label="tSNE Dimensions", value=2, min=1, step=1, width = "25%"),
         numericInput(inputId = "tsne.perp", label="Perplexity", value=30, min=1, step=1, width="25%"),
         numericInput(inputId = "tsne.iter", label="Max Iterations", value=1000, min=1, step=1, width="25%"),
-        radioButtons(inputId = "tsne.mode", label = "tSNE Mode", inline = TRUE, c("FFT"=TRUE, "BH"=FALSE), selected = "FFT"),
-        radioButtons(inputId = "tsne.tree", label = "tSNE NN Mode", inline = TRUE, c("ANNOY"=TRUE, "Vantage-Point"=FALSE), selected = "Vantage-Point"),
+        radioButtons(inputId = "tsne.mode", label = "tSNE Mode", inline = TRUE, c("FFT"=TRUE, "BH"=FALSE)),
+        radioButtons(inputId = "tsne.tree", label = "tSNE NN Mode", inline = TRUE, c("Vantage-Point"=FALSE, "ANNOY"=TRUE)),
         numericInput(inputId = "tsne.stop.lying.iter", label="Early Exagg. Phase End", value = 250, min = 1, step=1, width="25%"),
         numericInput(inputId = "tsne.early.exag", label="Early Exagg. Coefficient", value = 12.0, min = 0, step=0.5, width="25%"),
         numericInput(inputId = "tsne.start.late.exag", label="Start Late Exag. At Iter:", value = -1, min = -1, step=1, width="25%"),
@@ -467,14 +447,12 @@ server <- function(input, output, session) {
 
   observeEvent(input$run.tsne,{
     expdata$tsne.markers <- input$tsne.markers
-    updateSelectInput(session, "tsne.col",
-                      choices = as.vector(c(expdata[["tsne.markers"]], expdata[["metadata"]])),
-                      selected = as.vector(c(expdata[["tsne.markers"]], expdata[["metadata"]])))
 
     set.seed(input$seed)
 
     if(length(find.package("fftRtsne", quiet = T)) != 0){
       "fftRtsne" %>% print
+      str(expdata[["norm.data"]]) %>% print
       tsne <- fftRtsne(X = expdata[["norm.data"]][,c(expdata[["tsne.markers"]])],
                        dims = input$tsne.dim, perplexity = input$tsne.perp, check_duplicates = FALSE, max_iter = input$tsne.iter,
                        fft_not_bh = input$tsne.mode, ann_not_vptree = input$tsne.tree, stop_lying_iter = input$tsne.stop.lying.iter,
@@ -491,48 +469,44 @@ server <- function(input, output, session) {
       expdata$tsne <- data.frame(tsne1=tsne$Y[,1], tsne2=tsne$Y[,2])
     }
 
-
-
     "finished tsne" %>% print
     output$tsne.plot <- renderPlotly({
       ## TODO Make plotly output a figure with 1:1 aspect ratio!
         plot_ly(x = expdata[["tsne"]][,1], y = expdata[["tsne"]][,2], alpha = 0.5, type="scattergl", mode = "markers",
-                hoverinfo="none", marker = list(size = 3)) %>%
-          layout(xaxis = list(title="tSNE-1"),
-                 yaxis = list(title="tSNE-2"))
+                hoverinfo="none", marker = list(size = 3), width = 600, height = 600) %>%
+          layout(xaxis = list(title="tSNE-1"), yaxis = list(title="tSNE-2"), scene = list(aspectratio = list(x = 1, y = 1)))
     })
+    updateSelectInput(session, "tsne.col",
+                      choices = as.vector(c(expdata[["tsne.markers"]], expdata[["metadata"]])),
+                      selected = as.vector(c(expdata[["tsne.markers"]], expdata[["metadata"]]))[1])
 
   })
-
-  observe({
-    output$tsne.plot <- renderPlotly({
-      ## TODO Make plotly output a figure with 1:1 aspect ratio!
-
-      if(input$tsne.col %in% expdata[["tsne.markers"]]){
+  ## TODO Override legend plotting params in plotly (alpha and size are too low for categorical plotting.)
+  observeEvent(input$tsne.col, {
+    if(input$tsne.col %in% expdata[["tsne.markers"]]){
+      output$tsne.plot <- renderPlotly({
         plot_ly(x = expdata[["tsne"]][,1], y = expdata[["tsne"]][,2], colors = viridis(100), alpha = 0.5, color = expdata[["norm.data"]][,input$tsne.col], type="scattergl", mode = "markers",
-                hoverinfo="none", marker = list(size = 3)) %>%
-          layout(xaxis = list(title="tSNE-1"),
-                 yaxis = list(title="tSNE-2"))
-      }else{
-        if(length(unique(expdata[["norm.data"]][,input$tsne.col])) <= 12){
+                hoverinfo="none", marker = list(size = 3), width = 600, height = 600) %>%
+          layout(xaxis = list(title="tSNE-1"), yaxis = list(title="tSNE-2"), legend=list(markers = list(size=6, alpha=1), font=list(size=12)), scene = list(aspectratio = list(x = 1, y = 1)))
+      })
+    }else{
+      if(length(unique(expdata[["norm.data"]][,input$tsne.col])) <= 12){
+        output$tsne.plot <- renderPlotly({
           plot_ly(x = expdata[["tsne"]][,1], y = expdata[["tsne"]][,2], colors = colorblind_pal()(length(unique(expdata[["norm.data"]][,input$tsne.col]))), alpha = 0.5,
-                  color = expdata[["norm.data"]][,input$tsne.col], type="scattergl", mode = "markers",
-                  hoverinfo="none", marker = list(size = 3)) %>%
-            layout(xaxis = list(title="tSNE-1"),
-                   yaxis = list(title="tSNE-2"))
-        }else{
-          qual_col_pals <- brewer.pal.info[brewer.pal.info$category == 'qual',]
-          col_vector <- unlist(mapply(brewer.pal, qual_col_pals$maxcolors, rownames(qual_col_pals)))
+                  color = expdata[["norm.data"]][,input$tsne.col], type="scattergl", mode = "markers", hoverinfo="none", marker = list(size = 3), width = 600, height = 600) %>%
+            layout(xaxis = list(title="tSNE-1"), yaxis = list(title="tSNE-2"), legend=list(markers = list(size=6, alpha=1), font=list(size=12)), scene = list(aspectratio = list(x = 1, y = 1)))
+        })
+      }else{
+        qual_col_pals <- brewer.pal.info[brewer.pal.info$category == 'qual',]
+        col_vector <- unlist(mapply(brewer.pal, qual_col_pals$maxcolors, rownames(qual_col_pals)))
 
+        output$tsne.plot <- renderPlotly({
           plot_ly(x = expdata[["tsne"]][,1], y = expdata[["tsne"]][,2], colors = col_vector[sample.int(n = length(col_vector), size = length(unique(expdata[["norm.data"]][,input$tsne.col])), replace = F)], alpha = 0.5,
-                  color = expdata[["norm.data"]][,input$tsne.col], type="scattergl", mode = "markers",
-                  hoverinfo="none", marker = list(size = 3)) %>%
-            layout(xaxis = list(title="tSNE-1"),
-                   yaxis = list(title="tSNE-2"))
-        }
-
+                  color = expdata[["norm.data"]][,input$tsne.col], type="scattergl", mode = "markers", hoverinfo="none", marker = list(size = 3), width = 600, height = 600) %>%
+            layout(xaxis = list(title="tSNE-1"), yaxis = list(title="tSNE-2"), legend=list(markers = list(size=6, alpha=1), font=list(size=12)), scene = list(aspectratio = list(x = 1, y = 1)))
+        })
       }
-    })
+    }
   })
 
 
