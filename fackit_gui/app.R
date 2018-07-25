@@ -122,12 +122,34 @@ ui <- dashboardPage(dashboardHeader(title="FACkit Analysis"),
                                       selectInput("tsne.col", label = "Colour Variable", choices = list(), selected=1, multiple = FALSE))
                                 ),
                                 h2("DBscan - Clustering"), ## TODO Implement DBScan clustering
-                                fluidRow(
-                                  box()
-                                ),
                                 fluidRow( ## TODO Implement cluster refinement
-                                  box()
-                                )
+                                  box(plotOutput(outputId = "db.opt.plot"), width = 8, height="800px"),
+                                  box(title = "DBscan Parameter Scanning", width = 4,
+                                      numericInput("db.opt.eps.start", label="Epsilon Start", min = 0, value = 0.01, width="25%"),
+                                      numericInput("db.opt.eps.end", label="Epsilon End", min = 0, value = 0.04, width="25%"),
+                                      numericInput("db.opt.eps.step", label="Epsilon Step Size", min = 0, value = 0.001, step = 0.001, width="25%"),
+                                      numericInput("db.opt.mpts.start", label = "Min Points Start", min = 1, value = 3, step = 1, width="25%"),
+                                      numericInput("db.opt.mpts.end", label = "Min Points End", min = 1, value = 7, step = 1, width="25%"),
+                                      actionButton("db.opt.run", label = "Run", icon = icon("magic", lib="font-awesome"))
+                                      )
+                                ),
+                                fluidRow(
+                                  box(plotlyOutput(outputId = "db.clust.plot"), width=8, height="800px"),
+                                  box(title = "Final DBscan Parameters", width=4,
+                                      numericInput("db.eps", value = 0, min = 0, width = "25%", label = "Epsilon", width="25%"),
+                                      numericInput("db.mpts", value = 0, min = 0, width = "25%", label = "Min Pts", width="25%"),
+                                      actionButton("db.scan.run", label = "Run", icon = icon("magic", lib="font-awesome"))
+                                      )
+                                ),
+                                h2("Cluster Refinement"),
+                                fluidRow(
+                                  box(plotlyOutput(outputId = "db.clust.plot"), width=6, height="600px"),
+                                  box(plotlyOutput(outputId = "db.clust.detail.plot"), width=6, height="600px")
+                                ),
+                                fluidRow(
+                                  box(title = "Run Reclustering",
+                                    actionButton(inputId = "reclust.run", label="Run", icon = icon("magic", lib="font-awesome")))
+                                  )
                         ),
                         tabItem(tabName = "clust_enrich",
                                 h2(""),
