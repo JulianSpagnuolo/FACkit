@@ -38,6 +38,7 @@ if(length(find.package("fftRtsne", quiet = T)) != 0){
 ## TODO implement download of workspace
 ## TODO implement download of figures
 ## TODO implement dynamic report creation and download
+## TODO Fix all datatables sig figs and layout options - currently is not working.
 ui <- dashboardPage(dashboardHeader(title="FACkit Analysis"),
                     dashboardSidebar(sidebarMenu(menuItem("Home", tabName = "home", icon=icon("home", lib = "font-awesome"), selected=TRUE),
                                                  menuItem("Data Import", tabName = "data_import", icon=icon("import", lib = "glyphicon")),
@@ -558,7 +559,7 @@ server <- function(input, output, session) {
   #                    selected = as.vector(c(expdata[["tsne.markers"]], expdata[["metadata"]]))[1])
 
   })
-  ## TODO Override legend plotting params in plotly (alpha and size are too low for categorical plotting.)
+  ## TODO Override legend plotting params in plotly (alpha and size are too low for categorical plotting.) Not currently possible??
   ## TODO Make plotting options for the 1D tsne
   observeEvent(input$tsne.col, {
     if(input$tsne.col %in% expdata[["tsne.markers"]]){
