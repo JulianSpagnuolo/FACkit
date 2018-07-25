@@ -42,8 +42,8 @@ ui <- dashboardPage(dashboardHeader(title="FACkit Analysis"),
                     dashboardSidebar(sidebarMenu(menuItem("Home", tabName = "home", icon=icon("home", lib = "font-awesome"), selected=TRUE),
                                                  menuItem("Data Import", tabName = "data_import", icon=icon("import", lib = "glyphicon")),
                                                  menuItem("Transformation", tabName = "transformation", icon=icon("equalizer", lib = "glyphicon")),
-                                                 menuItem("Dimensional Reduction", tabName = "dim_red", icon=icon("sitemap", lib = "font-awesome")),
-                                                 menuItem("Cluster Enrichment", tabName = "clust_enrich", icon=icon("search", lib = "font-awesome")))
+                                                 menuItem("Dimensional Reduction", tabName = "dim_red", icon=icon("sitemap", lib = "font-awesome"))
+                                                 )#menuItem("Cluster Enrichment", tabName = "clust_enrich", icon=icon("search", lib = "font-awesome"))
                     ),
                     dashboardBody(
                       tabItems(
@@ -55,7 +55,7 @@ ui <- dashboardPage(dashboardHeader(title="FACkit Analysis"),
                         tabItem(tabName = "data_import",
                                 h2("Data Import"),
                                 fluidRow(h4("Select Data Folder"),
-                                         column(fileInput("file1", "Choose CSV File",multiple = TRUE,
+                                         column(fileInput("file1", "Choose CSV File", multiple = TRUE,
                                                           accept = c("text/csv","text/comma-separated-values,text/plain",".csv")),
                                                 width=4),
                                          column(numericInput(inputId="n.cond.cols", label="Number of Condition Columns", value=3, min=0, max=Inf, step=1, width="25%"),
@@ -115,60 +115,66 @@ ui <- dashboardPage(dashboardHeader(title="FACkit Analysis"),
                                 fluidRow(
                                   h3("Dimensional Reduction - tSNE"),
                                   uiOutput("tsne.ui")
-                                ),
+                                  ),
                                 fluidRow(
-                                  box(plotlyOutput(outputId = "tsne.plot"), width = 7, height = "700px"),
-                                  box(title = "tSNE Plot Parameters", width = 4,
-                                      selectInput("tsne.col", label = "Colour Variable", choices = list(), selected=1, multiple = FALSE))
+                                  column(width=7,
+                                         box(plotlyOutput(outputId = "tsne.plot"), width = 12, height="700px")
+                                  ),
+                                  column(width=5,
+                                         box(title = "tSNE Plot Parameters", width = 12,
+                                             fluidRow(
+                                               column(width=6,
+                                                      selectInput("tsne.col", label = "Colour Variable", choices = list(), selected=1, multiple = FALSE, width = "60%")),
+                                               column(width=6,
+                                                      radioButtons("db.tsne.dim", label = "tSNE Dimensions To Use:", choices = c("2D"="tsne", "1D"="tsne1d"), inline = TRUE))
+                                               ),
+                                             fluidRow(
+                                               column(width=6,
+                                                      actionButton("db.knn.run", label = "Run DBScan kNN dist", icon=icon("magic")))
+                                             )
+                                         ),
+                                         box(plotOutput("db.knn.plot"), width = 12)
+                                  )
                                 ),
-                                h2("DBscan - Clustering"), ## TODO Implement DBScan clustering
+                                h2("DBscan Clustering"), ## TODO Implement DBScan clustering
                                 fluidRow( ## TODO Implement cluster refinement
-                                  box(plotOutput(outputId = "db.opt.plot"), width = 8, height="800px"),
+                                  box(plotOutput(outputId = "db.opt.plot"), width = 8),
                                   box(title = "DBscan Parameter Scanning", width = 4,
-                                      numericInput("db.opt.eps.start", label="Epsilon Start", min = 0, value = 0.01, width="25%"),
-                                      numericInput("db.opt.eps.end", label="Epsilon End", min = 0, value = 0.04, width="25%"),
-                                      numericInput("db.opt.eps.step", label="Epsilon Step Size", min = 0, value = 0.001, step = 0.001, width="25%"),
-                                      numericInput("db.opt.mpts.start", label = "Min Points Start", min = 1, value = 3, step = 1, width="25%"),
-                                      numericInput("db.opt.mpts.end", label = "Min Points End", min = 1, value = 7, step = 1, width="25%"),
-                                      actionButton("db.opt.run", label = "Run", icon = icon("magic", lib="font-awesome"))
+                                      column(width = 6,
+                                             numericInput("db.opt.eps.start", label="Epsilon Start", min = 0, value = 0.01, width="50%"),
+                                             numericInput("db.opt.eps.step", label="Epsilon Step Size", min = 0, value = 0.001, step = 0.001, width="50%"),
+                                             numericInput("db.opt.mpts.start", label = "Min Points Start", min = 1, value = 3, step = 1, width="50%"),
+                                             actionButton("db.opt.run", label = "Run", icon = icon("magic", lib="font-awesome"))
+                                      ),
+                                      column(width = 6,
+                                             numericInput("db.opt.eps.end", label="Epsilon End", min = 0, value = 0.04, width="50%"),
+                                             br(), br(), br(), br(),
+                                             numericInput("db.opt.mpts.end", label = "Min Points End", min = 1, value = 7, step = 1, width="50%")
                                       )
+                                  )
                                 ),
                                 fluidRow(
-                                  box(plotlyOutput(outputId = "db.clust.plot"), width=8, height="800px"),
-                                  box(title = "Final DBscan Parameters", width=4,
-                                      numericInput("db.eps", value = 0, min = 0, width = "25%", label = "Epsilon", width="25%"),
-                                      numericInput("db.mpts", value = 0, min = 0, width = "25%", label = "Min Pts", width="25%"),
+                                  box(title = "Final DBscan Parameters", width=12,
+                                      numericInput("db.eps", value = 0, min = 0, label = "Epsilon", width="25%"),
+                                      numericInput("db.mpts", value = 0, min = 0, label = "Min Pts", width="25%"),
                                       actionButton("db.scan.run", label = "Run", icon = icon("magic", lib="font-awesome"))
-                                      )
+                                  )
                                 ),
                                 h2("Cluster Refinement"),
                                 fluidRow(
-                                  box(plotlyOutput(outputId = "db.clust.plot"), width=6, height="600px"),
-                                  box(plotlyOutput(outputId = "db.clust.detail.plot"), width=6, height="600px")
+                                  column(width=6,
+                                         box(plotlyOutput(outputId = "db.clust.plot"), width=12, height="700px")),
+                                  column(width=6,
+                                         box(title = "tSNE Colour Param - NOT IMPLEMENTED!", width = 12, height = "200px",
+                                             selectInput("db.tsne.col", label = "Colour Variable", choices = list(), selected=1, multiple = FALSE)),
+                                         box(plotlyOutput(outputId = "db.clust.detail.plot"), width=12, height="500px")
+                                  )
                                 ),
                                 fluidRow(
                                   box(title = "Run Reclustering",
-                                    actionButton(inputId = "reclust.run", label="Run", icon = icon("magic", lib="font-awesome")))
-                                  )
-                        ),
-                        tabItem(tabName = "clust_enrich",
-                                h2(""),
-                                fluidRow(
-                                  h3(""),
-                                  uiOutput("")
-                                ),
-                                fluidRow(
-                                  box(),
-                                  box()
-                                ),
-                                h2(""),
-                                fluidRow(
-                                  box()
-                                ),
-                                fluidRow(
-                                  box()
+                                      actionButton(inputId = "reclust.run", label="Run", icon = icon("magic", lib="font-awesome")))
                                 )
-                        )
+                                )
                       )
                     )
 )
@@ -399,7 +405,7 @@ server <- function(input, output, session) {
 
   output$norm.scat <- renderPlotly({
     plot_ly(x = expdata[["norm.data"]][,input$norm.scat.x], y = expdata[["norm.data"]][,input$norm.scat.y], type="scattergl", mode = "markers",
-            hoverinfo="none", marker = list(size = 3, color = 'rgba(0, 0, 0, .5)')) %>%
+            hoverinfo="skip", marker = list(size = 3, color = 'rgba(0, 0, 0, .5)')) %>%
       layout(yaxis = list(title=input$norm.scat.y),
              xaxis = list(title=input$norm.scat.x))
 
@@ -433,6 +439,7 @@ server <- function(input, output, session) {
   observeEvent(input$run.mem, {
     c("formatting data for MEM") %>% print
 
+    ## BUG this now fails if there is only a single Cond column.
     mem.data <- expdata[["norm.data"]][,c(expdata[["markers.mem"]])] ## TODO once MEM function is rewritten, replace with: expdata[["norm.data"]][,c(expdata[["tsne.markers"]], input$mem.groups)]
     mem.data$cluster <- as.numeric(as.factor(expdata[["norm.data"]][,c(input$mem.groups)])) ## TODO once MEM function is rewritten change this so that the expdata is directly input into the call to MEM without changing cluster to a factor and numeric... etc
 
@@ -443,6 +450,10 @@ server <- function(input, output, session) {
     }else{
       expdata$mem.res <- MEM(exp_data = mem.data, transform = FALSE, choose.markers = FALSE, choose.ref = FALSE, IQR_thresh = input$mem.iqr)
     }
+
+    str(mem.data) %>% print
+
+    str(expdata[["mem.res"]][["MAGpop"]][[1]]) %>% print
 
     c("Plotting MEM") %>% print
     output$mem.median <- renderPlot({
@@ -531,30 +542,36 @@ server <- function(input, output, session) {
     }
 
     "finished tsne" %>% print
-    output$tsne.plot <- renderPlotly({
-      ## TODO Make plotly output a figure with 1:1 aspect ratio!
-        plot_ly(x = expdata[["tsne"]][,1], y = expdata[["tsne"]][,2], alpha = 0.5, type="scattergl", mode = "markers",
-                hoverinfo="none", marker = list(size = 3), width = 600, height = 600) %>%
-          layout(xaxis = list(title="tSNE-1"), yaxis = list(title="tSNE-2"), scene = list(aspectratio = list(x = 1, y = 1)))
-    })
+    ## This could be redundant as the plot will be triggered once the tsne.col is updated.
+  #  output$tsne.plot <- renderPlotly({
+  #    ## TODO Make plotly output a figure with 1:1 aspect ratio!
+  #      plot_ly(x = expdata[["tsne"]][,1], y = expdata[["tsne"]][,2], alpha = 0.5, type="scattergl", mode = "markers",
+  #              hoverinfo="none", marker = list(size = 3), width = 600, height = 600) %>%
+  #        layout(xaxis = list(title="tSNE-1"), yaxis = list(title="tSNE-2"), scene = list(aspectratio = list(x = 1, y = 1)))
+  #  })
     updateSelectInput(session, "tsne.col",
                       choices = as.vector(c(expdata[["tsne.markers"]], expdata[["metadata"]])),
                       selected = as.vector(c(expdata[["tsne.markers"]], expdata[["metadata"]]))[1])
 
+  #  updateSelectInput(session, "db.tsne.col",
+  #                    choices = as.vector(c(expdata[["tsne.markers"]], expdata[["metadata"]])),
+  #                    selected = as.vector(c(expdata[["tsne.markers"]], expdata[["metadata"]]))[1])
+
   })
   ## TODO Override legend plotting params in plotly (alpha and size are too low for categorical plotting.)
+  ## TODO Make plotting options for the 1D tsne
   observeEvent(input$tsne.col, {
     if(input$tsne.col %in% expdata[["tsne.markers"]]){
       output$tsne.plot <- renderPlotly({
         plot_ly(x = expdata[["tsne"]][,1], y = expdata[["tsne"]][,2], colors = viridis(100), alpha = 0.5, color = expdata[["norm.data"]][,input$tsne.col], type="scattergl", mode = "markers",
-                hoverinfo="none", marker = list(size = 3), width = 600, height = 600) %>%
+                hoverinfo="skip", marker = list(size = 3), width = 600, height = 600) %>%
           layout(xaxis = list(title="tSNE-1"), yaxis = list(title="tSNE-2"), legend=list(markers = list(size=6, alpha=1), font=list(size=12)), scene = list(aspectratio = list(x = 1, y = 1)))
       })
     }else{
       if(length(unique(expdata[["norm.data"]][,input$tsne.col])) <= 12){
         output$tsne.plot <- renderPlotly({
           plot_ly(x = expdata[["tsne"]][,1], y = expdata[["tsne"]][,2], colors = colorblind_pal()(length(unique(expdata[["norm.data"]][,input$tsne.col]))), alpha = 0.5,
-                  color = expdata[["norm.data"]][,input$tsne.col], type="scattergl", mode = "markers", hoverinfo="none", marker = list(size = 3), width = 600, height = 600) %>%
+                  color = expdata[["norm.data"]][,input$tsne.col], type="scattergl", mode = "markers", hoverinfo="skip", marker = list(size = 3), width = 600, height = 600) %>%
             layout(xaxis = list(title="tSNE-1"), yaxis = list(title="tSNE-2"), legend=list(markers = list(size=6, alpha=1), font=list(size=12)), scene = list(aspectratio = list(x = 1, y = 1)))
         })
       }else{
@@ -563,16 +580,71 @@ server <- function(input, output, session) {
 
         output$tsne.plot <- renderPlotly({
           plot_ly(x = expdata[["tsne"]][,1], y = expdata[["tsne"]][,2], colors = col_vector[sample.int(n = length(col_vector), size = length(unique(expdata[["norm.data"]][,input$tsne.col])), replace = F)], alpha = 0.5,
-                  color = expdata[["norm.data"]][,input$tsne.col], type="scattergl", mode = "markers", hoverinfo="none", marker = list(size = 3), width = 600, height = 600) %>%
+                  color = expdata[["norm.data"]][,input$tsne.col], type="scattergl", mode = "markers", hoverinfo="skip", marker = list(size = 3), width = 600, height = 600) %>%
             layout(xaxis = list(title="tSNE-1"), yaxis = list(title="tSNE-2"), legend=list(markers = list(size=6, alpha=1), font=list(size=12)), scene = list(aspectratio = list(x = 1, y = 1)))
         })
       }
     }
   })
 
+  observeEvent(input$db.knn.run, {
+    output$db.knn.plot <- renderPlot({
+      kNNdistplot(x = expdata[[input$db.tsne.dim]], k = 4)
+    })
+  })
+
+  observeEvent(input$db.opt.run, {
+    expdata$db.opt <- dbscan.opt(data = expdata[[input$db.tsne.dim]], eps.start = input$db.opt.eps.start, eps.end = input$db.opt.eps.end,
+                                 step.size = input$db.opt.eps.step, minPts.start = input$db.opt.mpts.start, minPts.end = input$db.opt.mpts.end)
+
+    output$db.opt.plot <- renderPlot({
+      ggplot(expdata[["db.opt"]], aes(x=eps, y=n.clust, colour=noise.pts)) +geom_point() +scale_colour_gradientn(colours=magma(100), trans="log") +facet_wrap(~minPts)
+    })
+  })
+
+  observeEvent(input$db.scan.run, {
+    expdata$dbscan <- dbscan(x=expdata[[input$db.tsne.dim]], eps = input$db.eps, minPts = input$db.mpts)
+
+    # this just to make life a little easier later, not having to worry about factor weirdness.
+    expdata[["dbscan"]]$cluster <- as.character(expdata[["dbscan"]]$cluster)
+    expdata[["norm.data"]]$db.clust <- as.character(expdata[["dbscan"]]$cluster)
+
+    ## plotly output for exploring the dbscan output.
+    if(input$db.tsne.dim == "tsne"){
+      output$db.clust.plot <- renderPlotly({
+        plot_ly(x=expdata[["tsne"]][which(expdata[["dbscan"]]$cluster != 0),1], y=expdata[["tsne"]][which(expdata[["dbscan"]]$cluster != 0),2],
+                color=expdata[["dbscan"]]$cluster[which(expdata[["dbscan"]]$cluster != 0)], key=expdata[["dbscan"]]$cluster[which(expdata[["dbscan"]]$cluster != 0)],
+                hoverinfo="all", type = "scattergl", mode = "markers", marker = list(size = 3), width = 600, height = 600, source = "db.clust.plot") %>%
+          layout(showlegend=FALSE, xaxis = list(title="tSNE-1"), yaxis = list(title="tSNE-2"), legend=list(markers = list(size=6, alpha=1), font=list(size=12)), scene = list(aspectratio = list(x = 1, y = 1)))
+      })
+    }else{
+      output$db.clust.plot <- renderPlotly({
+        ## TODO Make plotting options for 1D tsne
+        ## TODO Convert to jitter boxplot without the box.
+        plot_ly(x=expdata[["tsne1d"]][which(expdata[["dbscan"]]$cluster != 0),], y=1,
+                color=expdata[["dbscan"]]$cluster[which(expdata[["dbscan"]]$cluster != 0)], key=expdata[["dbscan"]]$cluster[which(expdata[["dbscan"]]$cluster != 0)],
+                hoverinfo="all", type="scattergl", mode = "markers", marker = list(size = 3), width = 600, height = 600, source="db.clust.plot") %>%
+          layout(showlegend=FALSE, xaxis = list(title="tSNE-1"), yaxis = list(title="tSNE-2"), legend=list(markers = list(size=6, alpha=1), font=list(size=12)), scene = list(aspectratio = list(x = 1, y = 1)))
+      })
+    }
+  })
+
+  output$db.clust.detail.plot <- renderPlotly({
+    coi <- event_data(event = "plotly_click", source = "db.clust.plot")$key[[1]]
+    if(is.null(coi) == TRUE){return(NULL)}
+
+    some.data <- expdata[["norm.data"]][which(expdata[["norm.data"]]$db.clust == coi),]
+    some.data <- melt(some.data, measure.vars=expdata[["markers.raw"]], id.vars=expdata[["metadata"]])
+
+    plot_ly(x=some.data[,"variable"], y=some.data[,"value"], type="box", boxpoints = "all", jitter = 0.5,
+            markers=list(size=2, alpha=0.4), hoverinfo="skip") %>% layout(title=paste("Marker Expression in Cluster", coi, sep=" - "))
+  })
+
+
+  #observeEvent(input$reclust.run,{})
+
 
 }
 
 # Run the application
 shinyApp(ui = ui, server = server)
-
