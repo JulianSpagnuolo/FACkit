@@ -1,5 +1,6 @@
 clust.diff <- function(data, markers, cluster.id,test.method="Chisq", p.adj=TRUE, padj.method="BH")
 {
+  #' @title Cluster Diff
   #' @author Julian Spagnuolo
   #' @param data data.frame of observations, column names must match names in markers
   #' @param markers character vector, length must match number of columns in data
@@ -10,7 +11,7 @@ clust.diff <- function(data, markers, cluster.id,test.method="Chisq", p.adj=TRUE
   #'
   #' @seealso \link{\code{help("p.adjust")}}
   #'
-  #'
+  #' @export
   #'
   #'
   #'

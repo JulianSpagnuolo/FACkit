@@ -5,6 +5,8 @@ cutoffs <- function(cut.data, markers, component=NULL)
   #' @param cut.data output from cutfind function
   #' @param markers vector of marker names
   #' @param component named vector of the specific component from which the cutoff should be extracted. Names should be identical to markers
+  #'
+  #' @export
 
   # Unless specific component is chosen the right-hand cut from the first component is retrieved
   if(is.null(component))

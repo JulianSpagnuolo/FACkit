@@ -1,7 +1,9 @@
 clust.medians <- function(x, markers, clust.col, noise.clust.id=NULL)
 {
-  
-  
+  #' @title Cluster Medians
+  #' @author Julian Spagnuolo
+  #' @export
+
   if(!is.null(noise.clust.id))
   {
     clusts <- unique(x[which(x[,clust.col] != noise.clust.id),clust.col])
@@ -9,9 +11,9 @@ clust.medians <- function(x, markers, clust.col, noise.clust.id=NULL)
   else{
     clusts <- unique(x[,clust.col])
   }
-  
+
   clust.defs <- matrix(nrow=length(clusts), ncol=length(markers), dimnames = list(c(clusts), c(markers)))
-  
+
   for(i in 1:length(clusts))
   {
     for(n in 1:length(markers))
@@ -26,6 +28,6 @@ clust.medians <- function(x, markers, clust.col, noise.clust.id=NULL)
       }
     }
   }
-  
+
   return(clust.defs)
 }

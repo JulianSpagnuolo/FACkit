@@ -173,7 +173,14 @@ ui <- dashboardPage(dashboardHeader(title="FACkit Analysis"),
                                 ),
                                 fluidRow(
                                   box(title = "Run Reclustering",
+                                      uiOutput("reclust.markers"),
                                       actionButton(inputId = "reclust.run", label="Run", icon = icon("magic", lib="font-awesome")))
+                                ),
+                                fluidRow(
+                                  column(width = 6,
+                                         box(plotlyOutput(outputId = "reclust.plot"), width=12)),
+                                  column(width=6,
+                                         box(plotlyOutput(outputId = "reclust.detail.plot"), width=12))
                                 )
                                 )
                       )
@@ -558,6 +565,11 @@ server <- function(input, output, session) {
   #                    choices = as.vector(c(expdata[["tsne.markers"]], expdata[["metadata"]])),
   #                    selected = as.vector(c(expdata[["tsne.markers"]], expdata[["metadata"]]))[1])
 
+    output$reclust.markers <- renderUI({
+      checkboxGroupInput(inputId = "reclust.markers",label = "Select Markers", inline = TRUE,
+                         choices = expdata[["markers.raw"]], selected = expdata[["markers.raw"]])
+    })
+
   })
   ## TODO Override legend plotting params in plotly (alpha and size are too low for categorical plotting.) Not currently possible??
   ## TODO Make plotting options for the 1D tsne
@@ -615,7 +627,7 @@ server <- function(input, output, session) {
       output$db.clust.plot <- renderPlotly({
         plot_ly(x=expdata[["tsne"]][which(expdata[["dbscan"]]$cluster != 0),1], y=expdata[["tsne"]][which(expdata[["dbscan"]]$cluster != 0),2],
                 color=expdata[["dbscan"]]$cluster[which(expdata[["dbscan"]]$cluster != 0)], key=expdata[["dbscan"]]$cluster[which(expdata[["dbscan"]]$cluster != 0)],
-                hoverinfo="all", type = "scattergl", mode = "markers", marker = list(size = 3), width = 600, height = 600, source = "db.clust.plot") %>%
+                hoverinfo="none", type = "scattergl", mode = "markers", marker = list(size = 3), width = 600, height = 600, source = "db.clust.plot") %>%
           layout(showlegend=FALSE, xaxis = list(title="tSNE-1"), yaxis = list(title="tSNE-2"), legend=list(markers = list(size=6, alpha=1), font=list(size=12)), scene = list(aspectratio = list(x = 1, y = 1)))
       })
     }else{
@@ -624,7 +636,7 @@ server <- function(input, output, session) {
         ## TODO Convert to jitter boxplot without the box.
         plot_ly(x=expdata[["tsne1d"]][which(expdata[["dbscan"]]$cluster != 0),], y=1,
                 color=expdata[["dbscan"]]$cluster[which(expdata[["dbscan"]]$cluster != 0)], key=expdata[["dbscan"]]$cluster[which(expdata[["dbscan"]]$cluster != 0)],
-                hoverinfo="all", type="scattergl", mode = "markers", marker = list(size = 3), width = 600, height = 600, source="db.clust.plot") %>%
+                hoverinfo="none", type="scattergl", mode = "markers", marker = list(size = 3), width = 600, height = 600, source="db.clust.plot") %>%
           layout(showlegend=FALSE, xaxis = list(title="tSNE-1"), yaxis = list(title="tSNE-2"), legend=list(markers = list(size=6, alpha=1), font=list(size=12)), scene = list(aspectratio = list(x = 1, y = 1)))
       })
     }
@@ -637,12 +649,55 @@ server <- function(input, output, session) {
     some.data <- expdata[["norm.data"]][which(expdata[["norm.data"]]$db.clust == coi),]
     some.data <- melt(some.data, measure.vars=expdata[["markers.raw"]], id.vars=expdata[["metadata"]])
 
+
+    # TODO fix the markers param here, this does not work with box.
     plot_ly(x=some.data[,"variable"], y=some.data[,"value"], type="box", boxpoints = "all", jitter = 0.5,
             markers=list(size=2, alpha=0.4), hoverinfo="skip") %>% layout(title=paste("Marker Expression in Cluster", coi, sep=" - "))
   })
 
 
-  #observeEvent(input$reclust.run,{})
+  observeEvent(input$reclust.run, {
+    ## TODO figure out what to do with the noise clusters in dbscan - need to recluster amongst the split clusts.
+    c("Running clust.split") %>% print
+    expdata$clust.split <- clust.split(x = expdata[["norm.data"]], markers = input$reclust.markers, clusters = expdata[["dbscan"]]$cluster)
+    c("Running binmat") %>% print
+    expdata$bin.list <- binmat(data = expdata[["norm.data"]], cluster.col = "db.clust", markers = input$reclust.markers, split.list = expdata[["clust.split"]], thresh = 0) ## TODO alter bin mat to accept a cluster col that is not part of the data frame
+    c("Running split.merge") %>% print
+    expdata$split.merge <- split.merge(x = expdata[["norm.data"]], markers = input$reclust.markers, clust.col = "db.clust", binlist = expdata[["bin.list"]], noise.clust.id = "0")[,c("split.clusts","super.clusts")]
+
+    c("plotting") %>% print
+
+    if(input$db.tsne.dim == "tsne"){
+      output$reclust.plot <- renderPlotly({
+        plot_ly(x=expdata[["tsne"]][which(expdata[["split.merge"]]$super.clusts != 0),1], y=expdata[["tsne"]][which(expdata[["split.merge"]]$super.clusts != 0),2],
+                color=expdata[["split.merge"]]$super.clusts[which(expdata[["split.merge"]]$super.clusts != 0)], key=expdata[["split.merge"]]$super.clusts[which(expdata[["split.merge"]]$super.clusts != 0)],
+                hoverinfo="none", type = "scattergl", mode = "markers", marker = list(size = 3), width = 600, height = 600, source = "reclust.plot") %>%
+          layout(showlegend=FALSE, xaxis = list(title="tSNE-1"), yaxis = list(title="tSNE-2"), legend=list(markers = list(size=6, alpha=1), font=list(size=12)), scene = list(aspectratio = list(x = 1, y = 1)))
+      })
+    }else{
+      output$reclust.plot <- renderPlotly({
+        ## TODO Make plotting options for 1D tsne
+        ## TODO Convert to jitter boxplot without the box.
+        plot_ly(hoverinfo="none", type = "scattergl", mode = "markers", source = "reclust.plot") %>%
+          add_markers(x=jitter(x=expdata[["tsne1d"]][which(expdata[["split.merge"]]$super.clusts != 0),1]), y=1,
+                      color=expdata[["split.merge"]]$super.clusts[which(expdata[["split.merge"]]$super.clusts != 0)],
+                      key=expdata[["split.merge"]]$super.clusts[which(expdata[["split.merge"]]$super.clusts != 0)],
+                      marker = list(size = 3, alpha=0.4), hoverinfo = "none", showlegend = TRUE) %>%
+          layout(xaxis = list(title="tSNE-1"))
+      })
+    }
+  })
+
+  output$reclust.detail.plot <- renderPlotly({
+    coi <- event_data(event = "plotly_click", source = "reclust.plot")$key[[1]]
+    if(is.null(coi) == TRUE){return(NULL)}
+
+    some.data <- expdata[["norm.data"]][which(expdata[["split.merge"]]$super.clusts == coi),]
+    some.data <- melt(some.data, measure.vars=expdata[["markers.raw"]], id.vars=expdata[["metadata"]])
+    ## TODO remove the box from this using the method above in the 1D tsne plot.... or make compatible/prettier.
+    plot_ly(x=some.data[,"variable"], y=some.data[,"value"], type="box", boxpoints = "all", jitter = 0.5,
+            markers=list(size=2, alpha=0.4), hoverinfo="skip") %>% layout(title=paste("Marker Expression in Cluster", coi, sep=" - "))
+  })
 
 
 }

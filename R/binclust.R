@@ -10,7 +10,7 @@ binclust <- function(data, markers, nbins=100, distmet="eucl", percentiles=FALSE
   #' @param percentiles logical. Whether to use percentiles to create the bins for each marker. If FALSE, bins will be evenly spaced across the range for each dimension.
   #'
   #'
-  #'
+  #' @export
 
   # Create the bins
   bin.mat <- matrix(data=NA, nrow=nbins, ncol=length(markers), dimnames = list(c(1:nbins), markers))

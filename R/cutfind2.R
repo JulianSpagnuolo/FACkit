@@ -18,6 +18,7 @@ cutfind2 <- function(x, markers, npeaks=NULL, DensityThreshold=NULL, gridsize=14
 #'  @param which.dev integer - the number of deviations from the peak at which to set the cutoff value. Default = 2
 #'  @details
 #'
+#' @export
 
   if(is.null(npeaks))
   {

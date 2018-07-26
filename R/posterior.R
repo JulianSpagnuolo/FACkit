@@ -1,5 +1,7 @@
 posterior <- function(model.params, data)
 {
+  #' @title Posterior Probability
+  #'
   #' @author Julian Spagnuolo
   #' @param model.params list, output of phenosampler
   #' @param data numeric matrix or data.frame. ncols must equal length(names(model.params))

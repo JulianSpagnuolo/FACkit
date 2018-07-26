@@ -6,6 +6,9 @@ facsnorm <- function(x, cutoffs, asinCofac=25, method=c("arcsin","loglin","logit
   #' @param cutoffs vector of cutoff values. values MUST be in the order of the markers in x that they are to be applied to
   #' @param asinCofac spreading parameter for arcsin transformation. Only needs to be set if method == arcsin. Default == 25.
   #' @param method Type of transformation to be applied, either arcsin ("arcsin"), log-linear ("loglin") or logit ("logit") transformation
+  #'
+  #' @export
+
   if(method == "arcsin")
   {
     cat("Using arcsin Transformation\n")
@@ -14,7 +17,7 @@ facsnorm <- function(x, cutoffs, asinCofac=25, method=c("arcsin","loglin","logit
         names(cutoffs) <- names(x[1:ncol(x)])
       }
       asinData <- asinh(sweep(x[1:ncol(x)],2,cutoffs)/asinCofac)
-      return(out <- data.frame(asinData))
+      return(data.frame(asinData))
   }
   if(method == "loglin")
   {

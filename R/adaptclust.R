@@ -13,6 +13,7 @@ adapt.clust <- function(data, nbins=4, bin.defs=NULL, markers, dist="eucl", grow
   #' @param maxit integer maximum allowed interations of the algorithm
   #' @param minpts minimum node membership required for resampling the node def from the old node members.
   #'
+  #' @export
   #' @import gtools
 
   ## First create the bins

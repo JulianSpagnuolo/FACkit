@@ -3,6 +3,11 @@ bw.select <- function (x, scalest = "mad", level = 2L, kernel = "normal",
           truncate = TRUE)
 {
 
+  #' @title Bandwidth Select
+  #' @author Julian Spagnuolo
+  #'
+  #' @export
+
   if (level > 5L)
     stop("Level should be between 0 and 5")
   kernel <- match.arg(kernel, c("normal", "box", "epanech",

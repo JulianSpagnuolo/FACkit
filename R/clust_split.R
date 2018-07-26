@@ -1,18 +1,20 @@
 clust.split <- function(x, markers, clusters)
 {
+  #' @title Cluster Split
   #' @author Julian Spagnuolo
   #' @param x data.frame or matrix of numeric expression data
   #' @param markers character vector of column names in x to use in the cluster splitting
   #' @param clusters character vector of cluster ids. length must equal nrow of x.
-  #' 
+  #'
   #' @importFrom diptest dip.test
-  
-  
+  #' @export
+
+
   clust.ids <- unique(clusters)
-  
+
   to.split <- vector(mode="list", length=length(clust.ids))
   names(to.split) <- clust.ids
-  
+
   for(i in 1:length(unique(clust.ids)))
   {
     markers.to.split <- vector()

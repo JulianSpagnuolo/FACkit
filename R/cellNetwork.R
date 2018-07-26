@@ -1,13 +1,17 @@
 cell.network <- function(data, markers, clusters, phenotypes, state.clusters, major.phenos, halos,
                              distMethod="euclidean", parallel=FALSE, cores=NULL)
 {
+  #' @title Cell Network
+  #' @author Julian Spagnuolo
+  #' @export
+
   require(parallel)
-  
+
     # set the data structure
   data$clusters <- clusters
   data$pheno <- phenotypes
   data$halos <- halos
-  
+
     # Get the mode (peak) fluorescence intensity for each marker in the major phenotype for each landmark cluster
   modes <- matrix(nrow=length(state.clusters), ncol=length(markers), dimnames=list(state.clusters, markers))
     ### Make parallel, switch to using apply...
@@ -32,7 +36,7 @@ cell.network <- function(data, markers, clusters, phenotypes, state.clusters, ma
     cl <- makeCluster(cores)
     clusterExport(cl=cl, c("data"))
     clusterEvalQ(cl=cl, source(file=paste(getwd(),"/neighbor.R",sep="")))
-    
+
     ### neighbor is an internal Mpath function calculating a distance matrix on what is called modes here
     ### neighbor needs to be rewritten to use the Dist function in amap.
     nb <- parApply(t(data[,markers]), 2, function(x) neighbor(x, modes, distMethod=distMethod), cl=cl)
