@@ -2,7 +2,7 @@ nodeSize <- function(somtree, reset=FALSE, maxNodeSize=0.1)
   #'
   #' @title Scaled Node Sizes for growing SOM
   #' @author Julian Spagnuolo
-  #' @description
+  #' @description calcs size of nodes for som tree
   #' @param somtree results from calling som.tree
   #' @param reset Logical. If TRUE, node size is reset to maxNodeSize, default = FALSE
   #' @param maxNodeSize Maximum size for any node. Default = 15

@@ -16,7 +16,7 @@ Rcpp::List bindist(NumericMatrix binmat, NumericMatrix data) {
       std::vector<double> windist;
       for(int n = 0; n < binmat.nrow(); n++)
         {
-          dists[n] = sqrt(sum(pow(binmat.row(n)-data.row(i), 2.0))); // get dist of datapoint i to each node n in binmat
+          dists[n] = sqrt(sum(pow(binmat.row(n)-data.row(i), 2.0))); // get dist of datapoint i to each node n in binmat (why use euclidean distance here???)
         }
       // put the data index in the correct node bin
       if(nodes[which_min(dists)] == R_NilValue)

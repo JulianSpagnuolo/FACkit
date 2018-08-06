@@ -1,5 +1,5 @@
 ## culling empty sub-clusters, and setting new cluster names.
-split.merge <- function(x, markers, clust.col, bin.list, noise.clust.id=NULL)
+splitmerge <- function(x, markers, clust.col, bin.list, noise.clust.id=NULL)
 {
   #' @title Split Merge
   #' @author Julian Spagnuolo
@@ -9,6 +9,7 @@ split.merge <- function(x, markers, clust.col, bin.list, noise.clust.id=NULL)
   #' @param clust.col Character vector, column name identifying the vector of cluster ids.
   #' @param bin.list list of matrices. Each member of the list is a matrix defining the sub-clusters within each original clusters that should be split. Output from binmat function.
   #' @param noise.clust.id If a noise cluster is present in the data, this parameter will remove it from sub-clustering. Ie. DBScan identifies noise points as cluster "0". If NULL, this parameter is not used. Default is NULL.
+  #'
   #'
   #' @export
 

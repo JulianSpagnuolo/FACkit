@@ -15,6 +15,7 @@ library(pals)
 library(ggthemes)
 library(RColorBrewer)
 
+library(vipor)
 library(plotly)
 
 library(pheatmap)
@@ -32,6 +33,8 @@ if(length(find.package("fftRtsne", quiet = T)) != 0){
 }else{
   library(Rtsne)
 }
+find.package("FACkit")
+source("~/Documents/Rproj/fackit/fackit_gui/enrichTest-module.R")
 
 ## TODO Make the layout pretty with shinydashboards.
 ## TODO Add documentation guides in the boxes
@@ -39,12 +42,15 @@ if(length(find.package("fftRtsne", quiet = T)) != 0){
 ## TODO implement download of figures
 ## TODO implement dynamic report creation and download
 ## TODO Fix all datatables sig figs and layout options - currently is not working.
-ui <- dashboardPage(dashboardHeader(title="FACkit Analysis"),
+ui <- dashboardPage(skin = "blue",
+                    dashboardHeader(title="FACkit Analysis"),
                     dashboardSidebar(sidebarMenu(menuItem("Home", tabName = "home", icon=icon("home", lib = "font-awesome"), selected=TRUE),
                                                  menuItem("Data Import", tabName = "data_import", icon=icon("import", lib = "glyphicon")),
                                                  menuItem("Transformation", tabName = "transformation", icon=icon("equalizer", lib = "glyphicon")),
-                                                 menuItem("Dimensional Reduction", tabName = "dim_red", icon=icon("sitemap", lib = "font-awesome"))
-                                                 )#menuItem("Cluster Enrichment", tabName = "clust_enrich", icon=icon("search", lib = "font-awesome"))
+                                                 menuItem("Dimensional Reduction", tabName = "dim_red", icon=icon("sitemap", lib = "font-awesome")),
+                                                 menuItem("Cluster Enrichment", tabName = "clust_enrich", icon=icon("search", lib = "font-awesome")),
+                                                 downloadButton(outputId = "fackit.download", label="Download Data", icon=icon("download", lib="font-awesome"))
+                                                 )
                     ),
                     dashboardBody(
                       tabItems(
@@ -55,18 +61,28 @@ ui <- dashboardPage(dashboardHeader(title="FACkit Analysis"),
                         ),
                         tabItem(tabName = "data_import",
                                 h2("Data Import"),
-                                fluidRow(h4("Select Data Folder"),
-                                         column(fileInput("file1", "Choose CSV File", multiple = TRUE,
-                                                          accept = c("text/csv","text/comma-separated-values,text/plain",".csv")),
-                                                width=4),
-                                         column(numericInput(inputId="n.cond.cols", label="Number of Condition Columns", value=3, min=0, max=Inf, step=1, width="25%"),
-                                                width=8)
+                                fluidRow(box(width = 12, title = h4("Select Data Folder"),
+                                             column(fileInput("file1", "Choose CSV File", multiple = TRUE,
+                                                              accept = c("text/csv","text/comma-separated-values,text/plain",".csv")),
+                                                    width=4),
+                                             column(numericInput(inputId="n.cond.cols", label="Number of Condition Columns", value=3, min=0, max=Inf, step=1, width="25%"),
+                                                    width=8)
+                                             )
                                 ),
-                                fluidRow(h4("Add Conditional Data:"),
-                                         DTOutput("table")),
-                                fluidRow(h4("Check Marker Names:"),
-                                         DTOutput("column.names")),
-                                fluidRow(actionButton(inputId = "upload", label = "Upload Data", icon = icon("upload", lib="font-awesome")))
+                                fluidRow(
+                                  box(width = 12, title = h4("Add Conditional Data:"),
+                                      DTOutput("table")
+                                      ),
+                                  box(width = 12, title = h4("Check Marker Names:"),
+                                      DTOutput("column.names")
+                                      )
+                                  ),
+
+                                fluidRow(
+                                  box(
+                                    actionButton(inputId = "upload", label = "Upload Data", icon = icon("upload", lib="font-awesome"))
+                                    )
+                                  )
                         ),
                         tabItem(tabName = "transformation",
                                 h2("Data Transformation"),
@@ -80,11 +96,22 @@ ui <- dashboardPage(dashboardHeader(title="FACkit Analysis"),
                                                          selected = 1),
                                              sliderInput("raw.dist.range", label = h5("Plot Range"),
                                                          min = -100, max = 100, value = c(30,40)))),
-                                h4("Cutoff Values"),
-                                fluidRow(DTOutput("cutoffs")),
-                                h4("Run Transformation:"),
-                                numericInput(inputId = "asincofac", label = h5("Arc Sin Cofactor"), value = 25, min=0, max = Inf,width = "25%"),
-                                actionButton("transform", label = "Apply Transformation", icon = icon("ok",lib="glyphicon")),
+                                fluidRow(
+                                  box(width = 12, title = h4("Cutoff Values"),
+                                      DTOutput("cutoffs")
+                                      )
+                                  ),
+                                fluidRow(
+                                  ### TODO Move to box with cutoffs DT
+                                  box(width = 12, title = h4("Run Transformation:"),
+                                      column(width = 6,
+                                             numericInput(inputId = "asincofac", label = h5("Arc Sin Cofactor"), value = 25, min=0, max = Inf,width = "25%")
+                                             ),
+                                      column(width = 6,
+                                             actionButton("transform", label = "Apply Transformation", icon = icon("ok",lib="glyphicon"))
+                                             )
+                                      )
+                                ),
                                 h3("Check Transformed Data:"),
                                 fluidRow(box(plotOutput("norm.dist", click = "bin.click")),
                                          box(selectInput("norm.dist.marker", label = h5("Select Marker"),
@@ -99,13 +126,18 @@ ui <- dashboardPage(dashboardHeader(title="FACkit Analysis"),
                                 br(),
                                 h3("Marker Enrichment Modelling"),
                                 fluidRow(
-                                  box(h4("Set MEM Parameters"),
-                                      uiOutput("marker.select"),
-                                      uiOutput("mem.groups"),
-                                      numericInput("mem.iqr", label = h5("IQR Threshold"), value = NULL, width = "25%"),
-                                      actionButton("run.mem", label="Run", icon = icon("magic", lib="font-awesome")),
-                                      width = 12
-                                  )
+                                  box(width = 12,
+                                      h4("Set MEM Parameters"),
+                                      fluidRow(uiOutput("marker.select")), ## TODO this element needs to move right a bit.
+                                      fluidRow(
+                                        column(width = 6,
+                                               uiOutput("mem.groups"),
+                                               actionButton("run.mem", label="Run", icon = icon("magic", lib="font-awesome"))
+                                               ),
+                                        column(width = 6,
+                                               numericInput("mem.iqr", label = "IQR Threshold", value = NULL, width = "25%"))
+                                        )
+                                      )
                                 ),
                                 h4("MEM Results"),
                                 fluidRow(box(plotOutput("mem.median"), title = "MEM Group Median Expression"),
@@ -114,7 +146,6 @@ ui <- dashboardPage(dashboardHeader(title="FACkit Analysis"),
                         tabItem(tabName = "dim_red",
                                 h2("tSNE"),
                                 fluidRow(
-                                  h3("Dimensional Reduction - tSNE"),
                                   uiOutput("tsne.ui")
                                   ),
                                 fluidRow(
@@ -156,10 +187,14 @@ ui <- dashboardPage(dashboardHeader(title="FACkit Analysis"),
                                 ),
                                 fluidRow(
                                   box(title = "Final DBscan Parameters", width=12,
-                                      numericInput("db.eps", value = 0, min = 0, label = "Epsilon", width="25%"),
-                                      numericInput("db.mpts", value = 0, min = 0, label = "Min Pts", width="25%"),
-                                      actionButton("db.scan.run", label = "Run", icon = icon("magic", lib="font-awesome"))
-                                  )
+                                      column(width = 6,
+                                             numericInput("db.eps", value = 0, min = 0, label = "Epsilon", width="25%"),
+                                             actionButton("db.scan.run", label = "Run", icon = icon("magic", lib="font-awesome"))
+                                             ),
+                                      column(width = 6,
+                                             numericInput("db.mpts", value = 0, min = 0, label = "Min Pts", width="25%")
+                                             )
+                                      )
                                 ),
                                 h2("Cluster Refinement"),
                                 fluidRow(
@@ -172,31 +207,52 @@ ui <- dashboardPage(dashboardHeader(title="FACkit Analysis"),
                                   )
                                 ),
                                 fluidRow(
-                                  box(title = "Run Reclustering",
+                                  box(title = "Run Reclustering", width = 12,
                                       uiOutput("reclust.markers"),
                                       actionButton(inputId = "reclust.run", label="Run", icon = icon("magic", lib="font-awesome")))
                                 ),
                                 fluidRow(
                                   column(width = 6,
-                                         box(plotlyOutput(outputId = "reclust.plot"), width=12)),
+                                         box(plotlyOutput(outputId = "reclust.plot"), width=12, height = "650px")),
                                   column(width=6,
                                          box(plotlyOutput(outputId = "reclust.detail.plot"), width=12))
                                 )
+                                ),
+                        tabItem(tabName = "clust_enrich",
+                                h2("Identification of Clusters Enriched in Annotations of Interest"),
+                                tags$div(
+                                  id="enrich_test_params", class="row",
+                                  fluidRow(
+                                    box(title = "Enrichment Testing Parameters", width = 12,
+                                        column(width = 6,
+                                               uiOutput(outputId = "enrich.clust"),
+                                               checkboxInput(inputId = "enrich.equal",  value = FALSE, width = "100%",
+                                                             label = "Use Equal Proportions for Category Enrichment?")),
+                                        column(width = 6,
+                                               uiOutput("enrich.category"),
+                                               actionButton(inputId = "enrich.run", label = "Run", icon=icon("magic", lib="font-awesome")))
+                                    )
+                                  )
                                 )
+
+                        )
                       )
                     )
 )
 
 
 server <- function(input, output, session) {
+
+  output$fackit.download <- downloadHandler(
+    filename = function(){paste('fackit_results', Sys.Date(), '.Rdata', sep='')},
+    content = function(file) {
+      save.image(file = file)
+    }
+  )
+
   # TODO Modularise the shiny app.
   data.folder <- reactiveValues()
   expdata <- reactiveValues()
-  # input$file1 will be NULL initially. After the user selects
-  # and uploads a file, it will be a data frame with 'name',
-  # 'size', 'type', and 'datapath' columns. The 'datapath'
-  # column will contain the local filenames where the data can
-  # be found.
 
   # Add Conditional Columns
   observe({
@@ -221,7 +277,7 @@ server <- function(input, output, session) {
     data.folder$files <- data.files
   })
 
-  output$table <- renderDT(data.folder[["files"]], editable = TRUE, selection = "none", server = TRUE, options=list(dom="ltip"))
+  output$table <- renderDT(data.folder[["files"]], editable = TRUE, selection = "none", server = TRUE, options=list(dom="ltip", paging=FALSE))
   proxy = dataTableProxy("table")
   observeEvent(input$table_cell_edit, {
     info = input$table_cell_edit
@@ -270,7 +326,7 @@ server <- function(input, output, session) {
     rm(col.names);rm(header)
   })
 
-  output$column.names <- renderDT(data.folder[["col.names"]], editable = TRUE, selection = "none", server = TRUE, options=list(dom="ltip"))
+  output$column.names <- renderDT(data.folder[["col.names"]], editable = TRUE, selection = "none", server = TRUE, options=list(dom="ltip", paging=FALSE))
   proxy.cols = dataTableProxy("column.names")
   observeEvent(input$column.names_cell_edit, {
     info = input$column.names_cell_edit
@@ -380,7 +436,7 @@ server <- function(input, output, session) {
 
   ## Define Cutoff Value by Manually Entering in DataTable
   ## TODO make this DT show only 3 sig figs.
-  output$cutoffs <- renderDT(expdata[["cutoffs"]], editable = TRUE, selection = "none", server = TRUE, options=list(dom="ltip", digits=3))
+  output$cutoffs <- renderDT(expdata[["cutoffs"]], editable = TRUE, selection = "none", server = TRUE, options=list(dom="ltip", paging=FALSE, digits=3))
   proxy.cols = dataTableProxy("cutoffs")
   observeEvent(input$cutoffs_cell_edit, {
     info = input$cutoffs_cell_edit
@@ -581,22 +637,11 @@ server <- function(input, output, session) {
           layout(xaxis = list(title="tSNE-1"), yaxis = list(title="tSNE-2"), legend=list(markers = list(size=6, alpha=1), font=list(size=12)), scene = list(aspectratio = list(x = 1, y = 1)))
       })
     }else{
-      if(length(unique(expdata[["norm.data"]][,input$tsne.col])) <= 12){
-        output$tsne.plot <- renderPlotly({
-          plot_ly(x = expdata[["tsne"]][,1], y = expdata[["tsne"]][,2], colors = colorblind_pal()(length(unique(expdata[["norm.data"]][,input$tsne.col]))), alpha = 0.5,
-                  color = expdata[["norm.data"]][,input$tsne.col], type="scattergl", mode = "markers", hoverinfo="skip", marker = list(size = 3), width = 600, height = 600) %>%
-            layout(xaxis = list(title="tSNE-1"), yaxis = list(title="tSNE-2"), legend=list(markers = list(size=6, alpha=1), font=list(size=12)), scene = list(aspectratio = list(x = 1, y = 1)))
-        })
-      }else{
-        qual_col_pals <- brewer.pal.info[brewer.pal.info$category == 'qual',]
-        col_vector <- unlist(mapply(brewer.pal, qual_col_pals$maxcolors, rownames(qual_col_pals)))
-
-        output$tsne.plot <- renderPlotly({
-          plot_ly(x = expdata[["tsne"]][,1], y = expdata[["tsne"]][,2], colors = col_vector[sample.int(n = length(col_vector), size = length(unique(expdata[["norm.data"]][,input$tsne.col])), replace = F)], alpha = 0.5,
-                  color = expdata[["norm.data"]][,input$tsne.col], type="scattergl", mode = "markers", hoverinfo="skip", marker = list(size = 3), width = 600, height = 600) %>%
-            layout(xaxis = list(title="tSNE-1"), yaxis = list(title="tSNE-2"), legend=list(markers = list(size=6, alpha=1), font=list(size=12)), scene = list(aspectratio = list(x = 1, y = 1)))
-        })
-      }
+      output$tsne.plot <- renderPlotly({
+        plot_ly(x = expdata[["tsne"]][,1], y = expdata[["tsne"]][,2], alpha = 0.5,
+                color = expdata[["norm.data"]][,input$tsne.col], type="scattergl", mode = "markers", hoverinfo="skip", marker = list(size = 3), width = 600, height = 600) %>%
+          layout(xaxis = list(title="tSNE-1"), yaxis = list(title="tSNE-2"), legend=list(markers = list(size=6, alpha=1), font=list(size=12)), scene = list(aspectratio = list(x = 1, y = 1)))
+      })
     }
   })
 
@@ -647,12 +692,20 @@ server <- function(input, output, session) {
     if(is.null(coi) == TRUE){return(NULL)}
 
     some.data <- expdata[["norm.data"]][which(expdata[["norm.data"]]$db.clust == coi),]
-    some.data <- melt(some.data, measure.vars=expdata[["markers.raw"]], id.vars=expdata[["metadata"]])
+    some.data <- melt(some.data, measure.vars=expdata[["markers.raw"]])
 
+    some.data$x.jitt <- vipor::offsetX(y = some.data$value, x = some.data$variable)
+    some.data$tickval <- NA
+    temp.markers <- unique(some.data$variable)
+    for(i in 1:length(temp.markers)){
+      some.data[which(some.data$variable == temp.markers[i]),"x.jitt"] <- some.data[which(some.data$variable == temp.markers[i]),"x.jitt"] + i
+      some.data[which(some.data$variable == temp.markers[i]),"tickval"] <- i
+    }
 
-    # TODO fix the markers param here, this does not work with box.
-    plot_ly(x=some.data[,"variable"], y=some.data[,"value"], type="box", boxpoints = "all", jitter = 0.5,
-            markers=list(size=2, alpha=0.4), hoverinfo="skip") %>% layout(title=paste("Marker Expression in Cluster", coi, sep=" - "))
+    ## TODO add title to plots
+    ## HACK this implementation works, but the tick labels can be a bit messy.
+    plot_ly(x=some.data[,"x.jitt"], y=some.data[,"value"], type="scattergl", mode="markers", marker=list(size=4, alpha=0.4), hoverinfo="skip") %>%
+      layout(title = paste("Marker Expression in Cluster", coi, sep = " - "), xaxis=list(tickmode="array", ticktext=unique(some.data[,"variable"]), tickvals=unique(some.data[,"tickval"]), tickangle=-90), showlegend=FALSE)
   })
 
 
@@ -663,7 +716,9 @@ server <- function(input, output, session) {
     c("Running binmat") %>% print
     expdata$bin.list <- binmat(data = expdata[["norm.data"]], cluster.col = "db.clust", markers = input$reclust.markers, split.list = expdata[["clust.split"]], thresh = 0) ## TODO alter bin mat to accept a cluster col that is not part of the data frame
     c("Running split.merge") %>% print
-    expdata$split.merge <- split.merge(x = expdata[["norm.data"]], markers = input$reclust.markers, clust.col = "db.clust", binlist = expdata[["bin.list"]], noise.clust.id = "0")[,c("split.clusts","super.clusts")]
+
+    ## TODO currently has an issue where snlocation cannot find location param problem - occurs mostly with smaller data sets and some system seed values - need way to provide snlocation with predetermined sys.seed
+    expdata$split.merge <- splitmerge(x = expdata[["norm.data"]], markers = input$reclust.markers, clust.col = "db.clust", bin.list = expdata[["bin.list"]], noise.clust.id = "0")[,c("split.clusts","super.clusts")]
 
     c("plotting") %>% print
 
@@ -694,9 +749,66 @@ server <- function(input, output, session) {
 
     some.data <- expdata[["norm.data"]][which(expdata[["split.merge"]]$super.clusts == coi),]
     some.data <- melt(some.data, measure.vars=expdata[["markers.raw"]], id.vars=expdata[["metadata"]])
-    ## TODO remove the box from this using the method above in the 1D tsne plot.... or make compatible/prettier.
-    plot_ly(x=some.data[,"variable"], y=some.data[,"value"], type="box", boxpoints = "all", jitter = 0.5,
-            markers=list(size=2, alpha=0.4), hoverinfo="skip") %>% layout(title=paste("Marker Expression in Cluster", coi, sep=" - "))
+
+    some.data$x.jitt <- vipor::offsetX(y = some.data$value, x = some.data$variable)
+    some.data$tickval <- NA
+    temp.markers <- unique(some.data$variable)
+    for(i in 1:length(temp.markers)){
+      some.data[which(some.data$variable == temp.markers[i]),"x.jitt"] <- some.data[which(some.data$variable == temp.markers[i]),"x.jitt"] + i
+      some.data[which(some.data$variable == temp.markers[i]),"tickval"] <- i
+    }
+
+    ## HACK this implementation works, but the tick labels can be a bit messy.
+    plot_ly(x=some.data[,"x.jitt"], y=some.data[,"value"], type="scattergl", mode="markers", marker=list(size=4, alpha=0.4), hoverinfo="skip") %>%
+      layout(title = paste("Marker Expression in Cluster", coi, sep = " - "), xaxis=list(tickmode="array", ticktext=unique(some.data[,"variable"]), tickvals=unique(some.data[,"tickval"]), tickangle=-90), showlegend=FALSE)
+  })
+
+  ## TODO fix choice names for DB clust and super.clust/split.merge clusts
+  output$enrich.clust <- renderUI({
+    if(is.null(expdata[["split.merge"]])){
+      selectInput(inputId = "enrich.clust", label = "Select Clustering", multiple = FALSE, width = "25%", choices = c("db.clust"))
+    }else{
+      selectInput(inputId = "enrich.clust", label = "Select Clustering", multiple = FALSE, width = "25%", choices = c("db.clust","super.clusts"))
+    }
+  })
+
+  output$enrich.category <- renderUI({
+    checkboxGroupInput(inputId = "enrich.category", label = "Select Conditions to Perform Enrichment Testing On:", inline = TRUE,
+                       choices = expdata[["metadata"]])
+  })
+
+
+  observeEvent(input$enrich.run, {
+    input$enrich.category %>% print
+    conds <- input$enrich.category
+
+    lapply(conds,FUN = function(x) {
+      insertUI(
+        selector = "#enrich_test_params",
+        where = "afterEnd",
+        ui = tagList(
+          h4(paste(x,"Enrichment Results", sep=" ")),
+          enrichTest.UI(paste0("enrich.test", x))
+        )
+      )
+
+      ## TODO make if else controlling cbind of split merge
+      ## TODO make if else controlling cbind of the correct tsne object in case 1D tsne is used instead of 2D
+      ## BUG if clust.col param is changed, the whole thing breaks... interactive plots will continue to show the first elements selected in the first run of the analysis
+      ## also, the first analysis ui's will go blank.
+      ## HACK What is the callModule returning in df? How can I access the enrichment results tables and return to the user as download?
+      df <- callModule(enrichTest.module,
+                       paste0("enrich.test", x),
+                       data=reactive(cbind(expdata[["norm.data"]], expdata[["tsne"]], expdata[["split.merge"]])),
+                       cats = x,
+                       clust.col = input$enrich.clust,
+                       ## tsne.dim = input$tsne.dim,
+                       equal.props = input$enrich.equal,
+                       markers = expdata[["markers.raw"]]
+      )
+      str(df) %>% print
+    })
+
   })
 
 
