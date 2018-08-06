@@ -69,9 +69,9 @@ enrichTest <- function(x, clust.col, noise.clust.id=NULL, cat.col, equal.props=F
   results$binomial.FDR <- p.adjust(p=results$binomial.pval, method="fdr")
   results$hg.FDR <- p.adjust(p=results$hg.pval, method="fdr")
 
-  results$bin.FDR <- signif(results$binomial.FDR, digits=4)
-  results$bin.pval <- signif(results$binomial.pval, digits=4)
-  results$prop <- signif(results$proportion, digits=4)
+  results$bin.FDR <- signif(results$binomial.FDR, digits=3)
+  results$bin.pval <- signif(results$binomial.pval, digits=3)
+  results$prop <- signif(results$proportion, digits=3)
 
   return(results)
 }

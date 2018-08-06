@@ -42,6 +42,8 @@ source("~/Documents/Rproj/fackit/fackit_gui/enrichTest-module.R")
 ## TODO implement download of figures
 ## TODO implement dynamic report creation and download
 ## TODO Fix all datatables sig figs and layout options - currently is not working.
+## TODO implement server side bookmarking of state, including the associated datafiles.
+## TODO implement dynamic report rendering from results.
 ui <- dashboardPage(skin = "blue",
                     dashboardHeader(title="FACkit Analysis"),
                     dashboardSidebar(sidebarMenu(menuItem("Home", tabName = "home", icon=icon("home", lib = "font-awesome"), selected=TRUE),
@@ -49,7 +51,7 @@ ui <- dashboardPage(skin = "blue",
                                                  menuItem("Transformation", tabName = "transformation", icon=icon("equalizer", lib = "glyphicon")),
                                                  menuItem("Dimensional Reduction", tabName = "dim_red", icon=icon("sitemap", lib = "font-awesome")),
                                                  menuItem("Cluster Enrichment", tabName = "clust_enrich", icon=icon("search", lib = "font-awesome")),
-                                                 downloadButton(outputId = "fackit.download", label="Download Data", icon=icon("download", lib="font-awesome"))
+                                                 downloadButton(outputId = "fackit.download", label="Download Data", icon=icon("download", lib="font-awesome")) # TODO centre the button in the sidebar, make it pretty!
                                                  )
                     ),
                     dashboardBody(
@@ -242,17 +244,19 @@ ui <- dashboardPage(skin = "blue",
 
 
 server <- function(input, output, session) {
-
-  output$fackit.download <- downloadHandler(
-    filename = function(){paste('fackit_results', Sys.Date(), '.Rdata', sep='')},
-    content = function(file) {
-      save.image(file = file)
-    }
-  )
-
   # TODO Modularise the shiny app.
   data.folder <- reactiveValues()
   expdata <- reactiveValues()
+
+  ## TODO get the enrichment results, hierarchical clustering data back from the enrichment test module and save along with the rest of expdata.
+  ## TODO insert important inputs into expdata prior to save (i.e. any marker choices, enrichment test params, tsne params, clustering params, mem....etc)
+  ## TODO implement loading of saved expdata RDS file and update all inputs based on it .... maybe bookmarking will be better here.
+  output$fackit.download <- downloadHandler(
+    filename = function(){paste('fackit_results', Sys.time(), '.Rds', sep='')},
+    content = function(file) {
+      saveRDS(reactiveValuesToList(expdata),file = file)
+    }
+  )
 
   # Add Conditional Columns
   observe({
@@ -606,17 +610,12 @@ server <- function(input, output, session) {
     }
 
     "finished tsne" %>% print
-    ## This could be redundant as the plot will be triggered once the tsne.col is updated.
-  #  output$tsne.plot <- renderPlotly({
-  #    ## TODO Make plotly output a figure with 1:1 aspect ratio!
-  #      plot_ly(x = expdata[["tsne"]][,1], y = expdata[["tsne"]][,2], alpha = 0.5, type="scattergl", mode = "markers",
-  #              hoverinfo="none", marker = list(size = 3), width = 600, height = 600) %>%
-  #        layout(xaxis = list(title="tSNE-1"), yaxis = list(title="tSNE-2"), scene = list(aspectratio = list(x = 1, y = 1)))
-  #  })
+
     updateSelectInput(session, "tsne.col",
                       choices = as.vector(c(expdata[["tsne.markers"]], expdata[["metadata"]])),
                       selected = as.vector(c(expdata[["tsne.markers"]], expdata[["metadata"]]))[1])
 
+    ## TODO implement or remove... what is this???
   #  updateSelectInput(session, "db.tsne.col",
   #                    choices = as.vector(c(expdata[["tsne.markers"]], expdata[["metadata"]])),
   #                    selected = as.vector(c(expdata[["tsne.markers"]], expdata[["metadata"]]))[1])
@@ -797,6 +796,7 @@ server <- function(input, output, session) {
       ## BUG if clust.col param is changed, the whole thing breaks... interactive plots will continue to show the first elements selected in the first run of the analysis
       ## also, the first analysis ui's will go blank.
       ## HACK What is the callModule returning in df? How can I access the enrichment results tables and return to the user as download?
+      ## TODO return enrichment tables to expdata values (one per cond test), return any hierarchical clustering data.
       df <- callModule(enrichTest.module,
                        paste0("enrich.test", x),
                        data=reactive(cbind(expdata[["norm.data"]], expdata[["tsne"]], expdata[["split.merge"]])),
