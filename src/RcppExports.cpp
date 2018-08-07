@@ -5,6 +5,18 @@
 
 using namespace Rcpp;
 
+// binclust2
+std::vector< Rcpp::CharacterVector > binclust2(IntegerMatrix binmat, CharacterVector rowids);
+RcppExport SEXP _FACkit_binclust2(SEXP binmatSEXP, SEXP rowidsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerMatrix >::type binmat(binmatSEXP);
+    Rcpp::traits::input_parameter< CharacterVector >::type rowids(rowidsSEXP);
+    rcpp_result_gen = Rcpp::wrap(binclust2(binmat, rowids));
+    return rcpp_result_gen;
+END_RCPP
+}
 // bindist
 Rcpp::List bindist(NumericMatrix binmat, NumericMatrix data);
 RcppExport SEXP _FACkit_bindist(SEXP binmatSEXP, SEXP dataSEXP) {
@@ -30,6 +42,7 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
+    {"_FACkit_binclust2", (DL_FUNC) &_FACkit_binclust2, 2},
     {"_FACkit_bindist", (DL_FUNC) &_FACkit_bindist, 2},
     {"_FACkit_snlocation", (DL_FUNC) &_FACkit_snlocation, 1},
     {NULL, NULL, 0}

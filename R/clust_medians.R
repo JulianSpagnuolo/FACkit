@@ -21,7 +21,8 @@ clust.medians <- function(x, markers, clust.col, noise.clust.id=NULL)
       # Some clusters have only one member, thus the skew-normal location (median) function (snlocation) will not work
       if(nrow(x[which(x[,clust.col] == clusts[i]),]) > 1)
       {
-        clust.defs[clusts[i],markers[n]] <- snlocation(markdat = x[which(x[,clust.col] == clusts[i]),markers[n]])
+        clust.defs[clusts[i],markers[n]] <- median(x[which(x[,clust.col] == clusts[i]),markers[n]])
+        #clust.defs[clusts[i],markers[n]] <- snlocation(markdat = x[which(x[,clust.col] == clusts[i]),markers[n]])
       }
       else{
         clust.defs[clusts[i],markers[n]] <- x[which(x[,clust.col] == clusts[i]),markers[n]]

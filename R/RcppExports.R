@@ -4,6 +4,13 @@
 #' @export
 NULL
 
+binclust2 <- function(binmat, rowids) {
+    .Call('_FACkit_binclust2', PACKAGE = 'FACkit', binmat, rowids)
+}
+
+#' @export
+NULL
+
 bindist <- function(binmat, data) {
     .Call('_FACkit_bindist', PACKAGE = 'FACkit', binmat, data)
 }

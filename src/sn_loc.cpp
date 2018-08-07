@@ -1,3 +1,5 @@
+// [[Rcpp::depends(BH)]]
+
 #include <Rcpp.h>
 #include <boost/math/distributions/skew_normal.hpp>
 #include <boost/accumulators/accumulators.hpp>

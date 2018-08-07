@@ -3,6 +3,7 @@
 export()
 export(adapt.clust)
 export(binclust)
+export(binclust.it)
 export(binmat)
 export(bw.select)
 export(cell.network)

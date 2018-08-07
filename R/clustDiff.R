@@ -9,7 +9,7 @@ clust.diff <- function(data, markers, cluster.id,test.method="Chisq", p.adj=TRUE
   #' @param p.adj Logical. Whether to apply multiple testing correction or not. Default is TRUE.
   #' @param padj.method Character vector of length 1. Method of multiple testing correction to apply. Default is "BH" for Benjamini-Hochberg/FDR method, see \code{\link{help("p.adjust")}} for other method.
   #'
-  #' @seealso \link{\code{help("p.adjust")}}
+  #'
   #'
   #' @export
   #'
