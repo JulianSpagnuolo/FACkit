@@ -70,6 +70,9 @@ enrichTest.module <- function(input, output, session, data, cats, clust.col, tsn
   ns <- NS(paste0("enrich.test",cats))
 
 
+  ## TODO Figure out method to return hclust data from the heatmapping module... only enrichment.results table is returned
+  ## hm hclust must be put into a reactive({}) somehow but only called when input$enrich.hm.run is changed (maybe EventReactive could work)
+  ## else, the hm could be placed into a separate module??? how to get insertUI modules to talk to each other???
   enrichment.results <- reactive({
     ## TODO make noise clust.id dynamic somehow  - only needed when you add another clustering method.
     enrichTest(x= data(), clust.col = clust.col, noise.clust.id = "0", cat.col = cats, equal.props = equal.props, alternative = "greater")
@@ -80,7 +83,8 @@ enrichTest.module <- function(input, output, session, data, cats, clust.col, tsn
   })
 
   ## TODO customise the filtering and layout options - dropbox for category column, numeric filtering for the pval, prop and FDR columns.
-  output$enrich.tab <- renderDT(enrichment.results()[,c("cluster","category","cluster.size","prop","bin.pval","bin.FDR")], server = TRUE, options=list(digits=3, dom="ltip"))
+  ## TODO change the output columns to use the rounded values outputted by the enrichTest function [,c("cluster","category","cluster.size","prop","bin.pval","bin.FDR)]
+  output$enrich.tab <- renderDT(enrichment.results()[,c("cluster","category","cluster.size","proportion","binomial.pval","binomial.FDR")], server = TRUE, options=list(digits=3, dom="ltip"))
 
   output$enrich.prop <- renderPlotly({
     if(is.null(input$enrich.tab_rows_selected)){return(NULL)}

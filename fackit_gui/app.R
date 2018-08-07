@@ -806,7 +806,9 @@ server <- function(input, output, session) {
                        equal.props = input$enrich.equal,
                        markers = expdata[["markers.raw"]]
       )
-      str(df) %>% print
+
+      expdata[[paste0("enrich.test.", x)]] <- df()
+
     })
 
   })
