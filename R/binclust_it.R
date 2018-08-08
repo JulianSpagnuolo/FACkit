@@ -11,10 +11,19 @@ binclust.it <- function(expdata, markers, clust.col, noise.clust.id = "0", minpt
   #' @param alpha numeric. alpha param for qchisq call to identify cluster outliers by mahalanobis distance (see qchisq)
   #' @param maxit integer. Maximum number of iterations to run. Default is 5.
   #'
+  #' @importFrom mvnfast maha
+  #' @importFrom parallel detectCores
+  #'
   #' @export
   #'
   #'
   #'
+
+  if(detectCores() > 1){
+    ncores <- detectCores() - 1
+  }else{
+    ncores <- 1
+  }
 
   cat("Creating Binary Matrix\n")
   bin.mat <- sign(expdata[,markers])
@@ -54,17 +63,16 @@ binclust.it <- function(expdata, markers, clust.col, noise.clust.id = "0", minpt
   cat("Identifying Outliers\n")
   # Mahalanobis Outlier Detection
   clust.meds <- clust.medians(x=cbind(expdata[,markers], clust.ids), markers=markers, clust.col="id", noise.clust.id="0")
-  m.dists <- data.frame(dist=vector(), super.clust=vector())
+  m.dists <- data.frame(dist=vector(), clust.id=vector())
   for(n in unique(clust.ids$id))
   {
     if(n != noise.clust.id){
-      cov.mat <- cov(expdata[which(clust.ids$id == n),markers], use="pairwise")
+      cov.mat <- med.cov(expdata = expdata[,markers], markers = markers, use.median = TRUE)
+      cov.mat <- chol(cov.mat)
 
-      x <- mahalanobis(x = expdata[which(clust.ids$id == n),markers], center = clust.meds[n,markers], cov = cov.mat,
-                       tol=1e-22, inverted = T)
+      x <- maha(X=as.matrix(expdata[,markers]), mu=clust.meds[n,markers], sigma = cov.mat, ncores = ncores, isChol = TRUE)
 
-      x <- data.frame(dist=x)
-      x$clust.id <- n
+      x <- data.frame(dist = x, clust.id = n)
       m.dists <- rbind(m.dists, x)
     }
   }
@@ -105,19 +113,17 @@ binclust.it <- function(expdata, markers, clust.col, noise.clust.id = "0", minpt
 
     cat("Identifying Outliers\n")
     # Mahalanobis Outlier Detection
-    ## TODO the outlier detection loop is the slowest bottleneck in this function - convert to cpp or find faster r pkg
     clust.meds <- clust.medians(x=cbind(expdata[,markers], clust.ids), markers=markers, clust.col="id", noise.clust.id="0")
     m.dists <- data.frame(dist=vector(), super.clust=vector())
     for(n in unique(clust.ids$id))
     {
       if(n != noise.clust.id){
-        cov.mat <- cov(expdata[which(clust.ids$id == n),markers], use="pairwise")
+        cov.mat <- med.cov(expdata = expdata[,markers], markers = markers, use.median = TRUE)
+        cov.mat <- chol(cov.mat)
 
-        x <- mahalanobis(x = expdata[which(clust.ids$id == n),markers], center = clust.meds[n,markers], cov = cov.mat,
-                         tol=1e-22, inverted = T)
+        x <- maha(X=as.matrix(expdata[,markers]), mu=clust.meds[n,markers], sigma = cov.mat, ncores = ncores, isChol = TRUE)
 
-        x <- data.frame(dist=x)
-        x$clust.id <- n
+        x <- data.frame(dist = x, clust.id = n)
         m.dists <- rbind(m.dists, x)
       }
     }
