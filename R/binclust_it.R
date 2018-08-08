@@ -80,29 +80,34 @@ binclust.it <- function(expdata, markers, clust.col, noise.clust.id = "0", minpt
   print(table(m.dists$dist > dist.thresh))
   print(table(clust.ids$id == "0"))
 
+  cat("Reclustering Noise Points To Closest Cluster\n")
+  clust.meds <- clust.medians(x=cbind(expdata[,markers], clust.ids), markers=markers, clust.col="id", noise.clust.id="0")
+  m.dists <- data.frame(dist=vector(), clust.id=vector(), noise.pt=vector(), stringsAsFactors = FALSE)
+  noise <- subset(clust.ids, id == noise.clust.id)
+
+  # Calc mahalanobis dist of noise point to each cluster
+  ## TODO this is a bottleneck - can be quite slow... fix by either writing maha function in cpp or trying mvnfast::maha (latter did not work for main part)
+  for(n in unique(clust.ids[which(clust.ids$id != noise.clust.id),"id"])){
+    cov.mat <- med.cov(expdata = expdata[which(clust.ids$id == n), markers], markers = markers, use.median = TRUE)
+
+    x <- mahalanobis(x = expdata[which(rownames(expdata) %in% rownames(noise)), markers],
+                     center = clust.meds[n, markers], cov = cov.mat, inverted = TRUE, tol=1e-22)
+
+    x <- data.frame(dist=x, clust.id=n, noise.pt=rownames(noise), stringsAsFactors = FALSE)
+    m.dists <- rbind(m.dists, x)
+  }
+  # filter results by the distance threshold.
+  m.dists <- m.dists[which(m.dists$dist < dist.thresh),]
+  # Reclassify the clust ids
+  noise.pts <- unique(m.dists$noise.pt)
+  for(n in 1:length(noise.pts)){
+    clust.ids[which(rownames(clust.ids) == noise.pts[n]),"id"] <- m.dists[which(m.dists$dist == min(m.dists[which(m.dists$noise.pt == noise.pts[n]),"dist"])),"clust.id"]
+  }
+  print(table(clust.ids$id == "0"))
+
   cat("Starting the Iterator\n")
   # Reclustering Iterator
   for(i in 2:maxit){
-    cat("Reclustering\n")
-    clusts <- FACkit:::binclust2(binmat = bin.mat[which(clust.ids$id == noise.clust.id),], rowids = row.ids[which(clust.ids$id == noise.clust.id)])
-
-    ## aggregate all clusters not passing min points threshold
-    noise <- unlist(clusts[which(lengths(clusts) <= minpts)])
-
-    ## separate clusts passing min points threshold
-    clusts <- clusts[which(lengths(clusts) > minpts)]
-
-    new.clust.id <- stringr::str_split(string = as.character(max(as.numeric(clust.ids$id))), pattern = "\\.", simplify = T)[,1]
-    names(clusts) <- as.character(seq.int(from=as.numeric(new.clust.id) + 1, to=length(clusts)+as.numeric(new.clust.id), by=1))
-
-    ## reset the cluster.id for identified noise points to "0"
-    clust.ids[which(rownames(clust.ids) %in% noise),1] <- noise.clust.id
-
-    ## rename cluster ids
-    for(j in 1:length(clusts)) {
-      clust.ids[which(rownames(clust.ids) %in% clusts[[j]]),1] <- names(clusts[j])
-    }
-
     cat("Identifying Outliers\n")
     # Mahalanobis Outlier Detection
     clust.meds <- clust.medians(x=cbind(expdata[,markers], clust.ids), markers=markers, clust.col="id", noise.clust.id="0")
@@ -110,9 +115,9 @@ binclust.it <- function(expdata, markers, clust.col, noise.clust.id = "0", minpt
     for(n in unique(clust.ids$id))
     {
       if(n != noise.clust.id){
-        cov.mat <- med.cov(expdata = expdata[which(clust.ids$id == n),markers], markers = markers, use.median = TRUE)
+        cov.mat <- med.cov(expdata = expdata[which(clust.ids$id == n), markers], markers = markers, use.median = TRUE)
 
-        x <- mahalanobis(x=as.matrix(expdata[which(clust.ids$id == n),markers]), center=clust.meds[n,markers],
+        x <- mahalanobis(x=as.matrix(expdata[which(clust.ids$id == n),markers]), center=clust.meds[n, markers],
                          cov = cov.mat, inverted = TRUE, tol=1e-22)
 
         x <- data.frame(dist = x, clust.id = n)
@@ -129,7 +134,59 @@ binclust.it <- function(expdata, markers, clust.col, noise.clust.id = "0", minpt
 
     print(table(m.dists$dist >= dist.thresh))
     print(table(clust.ids$id == noise.clust.id))
+
+    cat("Reclustering Noise Points To Closest Cluster\n")
+    clust.meds <- clust.medians(x=cbind(expdata[,markers], clust.ids), markers=markers, clust.col="id", noise.clust.id="0")
+    m.dists <- data.frame(dist=vector(), clust.id=vector(), noise.pt=vector(), stringsAsFactors = FALSE)
+    noise <- subset(clust.ids, id == noise.clust.id)
+
+    # Calc mahalanobis dist of noise point to each cluster
+    ## TODO this is a bottleneck - can be quite slow... fix by either writing maha function in cpp or trying mvnfast::maha (latter did not work for main part)
+    for(n in unique(clust.ids[which(clust.ids$id != noise.clust.id),"id"])){
+      cov.mat <- med.cov(expdata = expdata[which(clust.ids$id == n), markers], markers = markers, use.median = TRUE)
+
+      x <- mahalanobis(x = expdata[which(rownames(expdata) %in% rownames(noise)), markers],
+                       center = clust.meds[n, markers], cov = cov.mat, inverted = TRUE, tol=1e-22)
+
+      x <- data.frame(dist=x, clust.id=n, noise.pt=rownames(noise), stringsAsFactors = FALSE)
+      m.dists <- rbind(m.dists, x)
+    }
+    # filter results by the distance threshold.
+    m.dists <- m.dists[which(m.dists$dist < dist.thresh),]
+    # Reclassify the clust ids
+    noise.pts <- unique(m.dists$noise.pt)
+    for(n in 1:length(noise.pts)){
+      clust.ids[which(rownames(clust.ids) == noise.pts[n]),"id"] <- m.dists[which(m.dists$dist == min(m.dists[which(m.dists$noise.pt == noise.pts[n]),"dist"])),"clust.id"]
+    }
+    print(table(clust.ids$id == noise.clust.id))
   }
+
+  cat("Detecting Final Outliers\n")
+  # Mahalanobis Outlier Detection
+  clust.meds <- clust.medians(x=cbind(expdata[,markers], clust.ids), markers=markers, clust.col="id", noise.clust.id="0")
+  m.dists <- data.frame(dist=vector(), super.clust=vector())
+  for(n in unique(clust.ids$id))
+  {
+    if(n != noise.clust.id){
+      cov.mat <- med.cov(expdata = expdata[which(clust.ids$id == n), markers], markers = markers, use.median = TRUE)
+
+      x <- mahalanobis(x=as.matrix(expdata[which(clust.ids$id == n),markers]), center=clust.meds[n, markers],
+                       cov = cov.mat, inverted = TRUE, tol=1e-22)
+
+      x <- data.frame(dist = x, clust.id = n)
+      m.dists <- rbind(m.dists, x)
+    }
+  }
+  cat("Reclassifying Final Outliers\n")
+  # reclassify all points not passing mahalanobis threshold as noise
+  clust.ids[which(rownames(clust.ids) %in% rownames(m.dists[which(m.dists$dist >= dist.thresh),])),1] <- noise.clust.id
+  # reclassify clusters which are now too small to pass min points threshold
+  clust.freqs <- as.data.frame(table(clust.ids$id), stringsAsFactors = F)
+  clust.freqs <- clust.freqs[which(clust.freqs$Freq <= minpts),]
+  clust.ids[which(clust.ids$id %in% clust.freqs$Var1),1] <- noise.clust.id
+
+  print(table(m.dists$dist >= dist.thresh))
+  print(table(clust.ids$id == noise.clust.id))
 
   return(clust.ids)
 }
