@@ -67,10 +67,10 @@ binclust.it <- function(expdata, markers, clust.col, noise.clust.id = "0", minpt
   for(n in unique(clust.ids$id))
   {
     if(n != noise.clust.id){
-      cov.mat <- med.cov(expdata = expdata[,markers], markers = markers, use.median = TRUE)
+      cov.mat <- med.cov(expdata = expdata[which(clust.ids$id == n),markers], markers = markers, use.median = TRUE)
       cov.mat <- chol(cov.mat)
 
-      x <- maha(X=as.matrix(expdata[,markers]), mu=clust.meds[n,markers], sigma = cov.mat, ncores = ncores, isChol = TRUE)
+      x <- maha(X=as.matrix(expdata[which(clust.ids$id == n),markers]), mu=clust.meds[n,markers], sigma = cov.mat, ncores = ncores, isChol = TRUE)
 
       x <- data.frame(dist = x, clust.id = n)
       m.dists <- rbind(m.dists, x)
@@ -118,10 +118,11 @@ binclust.it <- function(expdata, markers, clust.col, noise.clust.id = "0", minpt
     for(n in unique(clust.ids$id))
     {
       if(n != noise.clust.id){
-        cov.mat <- med.cov(expdata = expdata[,markers], markers = markers, use.median = TRUE)
+        cov.mat <- med.cov(expdata = expdata[which(clust.ids$id == n),markers], markers = markers, use.median = TRUE)
         cov.mat <- chol(cov.mat)
 
-        x <- maha(X=as.matrix(expdata[,markers]), mu=clust.meds[n,markers], sigma = cov.mat, ncores = ncores, isChol = TRUE)
+        x <- maha(X=as.matrix(expdata[which(clust.ids$id == n),markers]), mu=clust.meds[n,markers],
+                  sigma = cov.mat, ncores = ncores, isChol = TRUE)
 
         x <- data.frame(dist = x, clust.id = n)
         m.dists <- rbind(m.dists, x)

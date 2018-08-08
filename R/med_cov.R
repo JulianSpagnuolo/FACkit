@@ -9,11 +9,17 @@ med.cov <- function(expdata, markers, use.median=TRUE){
   #'
   #' @export
 
+  n <- nrow(expdata) - 1L
+
   if(!isTRUE(use.median)){
-    cov <- crossprod(sweep(as.matrix(expdata[,markers]), 2L, colMeans(expdata[,markers]))) / (nrow(expdata[,markers]) - 1L)
+    mu <- colMeans(expdata[,markers])
+    cov <- sweep(as.matrix(expdata[,markers]), 2L, mu)
   }else{
     meds <- apply(expdata[,markers], MARGIN = 2, function(x) {median(x)})
-    cov <- crossprod(sweep(as.matrix(expdata[,markers]), 2L, meds)) / (nrow(expdata[,markers]) - 1L)
+    cov <- sweep(as.matrix(expdata[,markers]), 2L, meds)
   }
+
+  cov <- crossprod() / n
+
   return(cov)
 }
