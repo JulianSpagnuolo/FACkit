@@ -198,7 +198,6 @@ ui <- dashboardPage(skin = "blue",
                                              )
                                       )
                                 ),
-                                h2("Cluster Refinement"),
                                 fluidRow(
                                   column(width=6,
                                          box(plotlyOutput(outputId = "db.clust.plot"), width=12, height="700px")),
@@ -208,9 +207,13 @@ ui <- dashboardPage(skin = "blue",
                                          box(plotlyOutput(outputId = "db.clust.detail.plot"), width=12, height="500px")
                                   )
                                 ),
+                                h2("Cluster Refinement"),
                                 fluidRow(
                                   box(title = "Run Reclustering", width = 12,
                                       uiOutput("reclust.markers"),
+                                      numericInput(inputId = "reclust.minpts", label = "Minimum Cluster Membership", value = 4, min = 1, step = 1),
+                                      numericInput(inputId = "reclust.alpha", label = "Significance Level for Critical Chi-square Cutoff", value = 0.001, min = 0, max = 1, step = 1),
+                                      numericInput(inputId = "reclust.iter", label = "Reclustering Iterations", value = 5, min = 1, step = 1),
                                       actionButton(inputId = "reclust.run", label="Run", icon = icon("magic", lib="font-awesome")))
                                 ),
                                 fluidRow(
@@ -710,21 +713,25 @@ server <- function(input, output, session) {
 
   observeEvent(input$reclust.run, {
     ## TODO figure out what to do with the noise clusters in dbscan - need to recluster amongst the split clusts.
-    c("Running clust.split") %>% print
-    expdata$clust.split <- clust.split(x = expdata[["norm.data"]], markers = input$reclust.markers, clusters = expdata[["dbscan"]]$cluster)
-    c("Running binmat") %>% print
-    expdata$bin.list <- binmat(data = expdata[["norm.data"]], cluster.col = "db.clust", markers = input$reclust.markers, split.list = expdata[["clust.split"]], thresh = 0) ## TODO alter bin mat to accept a cluster col that is not part of the data frame
-    c("Running split.merge") %>% print
+    c("Running binclust.it") %>% print
+    expdata$split.merge <- binclust.it(expdata = cbind(expdata[["norm.data"]], data.frame(binclust = as.character(expdata[["dbscan"]]$cluster), stringsAsFactors = FALSE)),
+                                       markers=input$reclust.markers, clust.col = "binclust", noise.clust.id = "0",
+                                       minpts = input$reclust.minpts, alpha = input$reclust.alpha, maxit = input$reclust.iter)
+
+    #expdata$clust.split <- clust.split(x = expdata[["norm.data"]], markers = input$reclust.markers, clusters = expdata[["dbscan"]]$cluster)
+    #c("Running binmat") %>% print
+    #expdata$bin.list <- binmat(data = expdata[["norm.data"]], cluster.col = "db.clust", markers = input$reclust.markers, split.list = expdata[["clust.split"]], thresh = 0) ## TODO alter bin mat to accept a cluster col that is not part of the data frame
+    #c("Running split.merge") %>% print
 
     ## TODO currently has an issue where snlocation cannot find location param problem - occurs mostly with smaller data sets and some system seed values - need way to provide snlocation with predetermined sys.seed
-    expdata$split.merge <- splitmerge(x = expdata[["norm.data"]], markers = input$reclust.markers, clust.col = "db.clust", bin.list = expdata[["bin.list"]], noise.clust.id = "0")[,c("split.clusts","super.clusts")]
+    #expdata$split.merge <- splitmerge(x = expdata[["norm.data"]], markers = input$reclust.markers, clust.col = "db.clust", bin.list = expdata[["bin.list"]], noise.clust.id = "0")[,c("split.clusts","super.clusts")]
 
     c("plotting") %>% print
 
     if(input$db.tsne.dim == "tsne"){
       output$reclust.plot <- renderPlotly({
-        plot_ly(x=expdata[["tsne"]][which(expdata[["split.merge"]]$super.clusts != 0),1], y=expdata[["tsne"]][which(expdata[["split.merge"]]$super.clusts != 0),2],
-                color=expdata[["split.merge"]]$super.clusts[which(expdata[["split.merge"]]$super.clusts != 0)], key=expdata[["split.merge"]]$super.clusts[which(expdata[["split.merge"]]$super.clusts != 0)],
+        plot_ly(x=expdata[["tsne"]][which(expdata[["split.merge"]]$id != "0"),1], y=expdata[["tsne"]][which(expdata[["split.merge"]]$id != "0"),2],
+                color=expdata[["split.merge"]]$id[which(expdata[["split.merge"]]$id != "0")], key=expdata[["split.merge"]]$id[which(expdata[["split.merge"]]$id != "0")],
                 hoverinfo="none", type = "scattergl", mode = "markers", marker = list(size = 3), width = 600, height = 600, source = "reclust.plot") %>%
           layout(showlegend=FALSE, xaxis = list(title="tSNE-1"), yaxis = list(title="tSNE-2"), legend=list(markers = list(size=6, alpha=1), font=list(size=12)), scene = list(aspectratio = list(x = 1, y = 1)))
       })
@@ -733,9 +740,9 @@ server <- function(input, output, session) {
         ## TODO Make plotting options for 1D tsne
         ## TODO Convert to jitter boxplot without the box.
         plot_ly(hoverinfo="none", type = "scattergl", mode = "markers", source = "reclust.plot") %>%
-          add_markers(x=jitter(x=expdata[["tsne1d"]][which(expdata[["split.merge"]]$super.clusts != 0),1]), y=1,
-                      color=expdata[["split.merge"]]$super.clusts[which(expdata[["split.merge"]]$super.clusts != 0)],
-                      key=expdata[["split.merge"]]$super.clusts[which(expdata[["split.merge"]]$super.clusts != 0)],
+          add_markers(x=jitter(x=expdata[["tsne1d"]][which(expdata[["split.merge"]]$id != "0"),1]), y=1,
+                      color=expdata[["split.merge"]]$id[which(expdata[["split.merge"]]$id != "0")],
+                      key=expdata[["split.merge"]]$id[which(expdata[["split.merge"]]$id != "0")],
                       marker = list(size = 3, alpha=0.4), hoverinfo = "none", showlegend = TRUE) %>%
           layout(xaxis = list(title="tSNE-1"))
       })
@@ -746,7 +753,7 @@ server <- function(input, output, session) {
     coi <- event_data(event = "plotly_click", source = "reclust.plot")$key[[1]]
     if(is.null(coi) == TRUE){return(NULL)}
 
-    some.data <- expdata[["norm.data"]][which(expdata[["split.merge"]]$super.clusts == coi),]
+    some.data <- expdata[["norm.data"]][which(expdata[["split.merge"]]$id == coi),]
     some.data <- melt(some.data, measure.vars=expdata[["markers.raw"]], id.vars=expdata[["metadata"]])
 
     some.data$x.jitt <- vipor::offsetX(y = some.data$value, x = some.data$variable)
@@ -767,7 +774,7 @@ server <- function(input, output, session) {
     if(is.null(expdata[["split.merge"]])){
       selectInput(inputId = "enrich.clust", label = "Select Clustering", multiple = FALSE, width = "25%", choices = c("db.clust"))
     }else{
-      selectInput(inputId = "enrich.clust", label = "Select Clustering", multiple = FALSE, width = "25%", choices = c("db.clust","super.clusts"))
+      selectInput(inputId = "enrich.clust", label = "Select Clustering", multiple = FALSE, width = "25%", choices = c("db.clust"="db.clust","binclust"="id"))
     }
   })
 

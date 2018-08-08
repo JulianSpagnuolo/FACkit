@@ -40,18 +40,21 @@ binclust.it <- function(expdata, markers, clust.col, noise.clust.id = "0", minpt
 
     ## aggregate all clusters not passing min points threshold
     noise <- unlist(clusts[which(lengths(clusts) <= minpts)])
-
-    ## separate clusts passing min points threshold
-    clusts <- clusts[which(lengths(clusts) > minpts)]
-    names(clusts) <- paste(n, as.character(seq.int(from=1, to=length(clusts), by=1)), sep = ".")
-
     ## reset the cluster.id for identified noise points to "0"
     clust.ids[which(rownames(clust.ids) %in% noise),1] <- noise.clust.id
 
-    ## rename cluster ids
-    for(j in 1:length(clusts)) {
-      clust.ids[which(rownames(clust.ids) %in% clusts[[j]]),1] <- names(clusts[j])
+    ## separate clusts passing min points threshold
+    clusts <- clusts[which(lengths(clusts) > minpts)]
+    if(length(clusts) > 1){
+      names(clusts) <- paste(n, as.character(seq.int(from=1, to=length(clusts), by=1)), sep = ".")
+      ## rename cluster ids
+      for(j in 1:length(clusts)) {
+        clust.ids[which(rownames(clust.ids) %in% clusts[[j]]),1] <- names(clusts[j])
+      }
+    }else{
+      clust.ids[which(rownames(clust.ids) %in% unlist(clusts)),1] <- n
     }
+
   }
 
   cat("Identifying Outliers\n")
