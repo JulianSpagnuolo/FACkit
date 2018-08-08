@@ -19,7 +19,7 @@ med.cov <- function(expdata, markers, use.median=TRUE){
     cov <- sweep(as.matrix(expdata[,markers]), 2L, meds)
   }
 
-  cov <- crossprod() / n
+  cov <- crossprod(cov) / n
 
   return(cov)
 }
