@@ -17,6 +17,8 @@ binclust.it <- function(expdata, markers, clust.col, noise.clust.id = "0", minpt
   #'
   #'
 
+  ## TODO check split clusters for identity - if this makes identical or super close clusters, implement a cluster merging step.
+
   cat("Creating Binary Matrix\n")
   bin.mat <- sign(expdata[,markers])
 
