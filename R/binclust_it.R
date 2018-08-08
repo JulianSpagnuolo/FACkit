@@ -11,19 +11,11 @@ binclust.it <- function(expdata, markers, clust.col, noise.clust.id = "0", minpt
   #' @param alpha numeric. alpha param for qchisq call to identify cluster outliers by mahalanobis distance (see qchisq)
   #' @param maxit integer. Maximum number of iterations to run. Default is 5.
   #'
-  #' @importFrom mvnfast maha
-  #' @importFrom parallel detectCores
   #'
   #' @export
   #'
   #'
   #'
-
-  if(detectCores() > 1){
-    ncores <- detectCores() - 1
-  }else{
-    ncores <- 1
-  }
 
   cat("Creating Binary Matrix\n")
   bin.mat <- sign(expdata[,markers])
@@ -68,9 +60,9 @@ binclust.it <- function(expdata, markers, clust.col, noise.clust.id = "0", minpt
   {
     if(n != noise.clust.id){
       cov.mat <- med.cov(expdata = expdata[which(clust.ids$id == n),markers], markers = markers, use.median = TRUE)
-      cov.mat <- chol(cov.mat)
 
-      x <- maha(X=as.matrix(expdata[which(clust.ids$id == n),markers]), mu=clust.meds[n,markers], sigma = cov.mat, ncores = ncores, isChol = TRUE)
+      x <- mahalanobis(x=as.matrix(expdata[which(clust.ids$id == n),markers]), center=clust.meds[n,markers],
+                       cov = cov.mat, inverted = TRUE, tol=1e-22)
 
       x <- data.frame(dist = x, clust.id = n)
       m.dists <- rbind(m.dists, x)
@@ -119,10 +111,9 @@ binclust.it <- function(expdata, markers, clust.col, noise.clust.id = "0", minpt
     {
       if(n != noise.clust.id){
         cov.mat <- med.cov(expdata = expdata[which(clust.ids$id == n),markers], markers = markers, use.median = TRUE)
-        cov.mat <- chol(cov.mat)
 
-        x <- maha(X=as.matrix(expdata[which(clust.ids$id == n),markers]), mu=clust.meds[n,markers],
-                  sigma = cov.mat, ncores = ncores, isChol = TRUE)
+        x <- mahalanobis(x=as.matrix(expdata[which(clust.ids$id == n),markers]), center=clust.meds[n,markers],
+                         cov = cov.mat, inverted = TRUE, tol=1e-22)
 
         x <- data.frame(dist = x, clust.id = n)
         m.dists <- rbind(m.dists, x)
