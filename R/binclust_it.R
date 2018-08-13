@@ -166,32 +166,5 @@ binclust.it <- function(expdata, markers, clust.col, noise.clust.id = "0", minpt
     print(table(clust.ids$id == noise.clust.id))
   }
 
-  cat("Detecting Final Outliers\n")
-  # Mahalanobis Outlier Detection
-  clust.meds <- clust.medians(x=cbind(expdata[,markers], clust.ids), markers=markers, clust.col="id", noise.clust.id="0")
-  m.dists <- data.frame(dist=vector(), super.clust=vector())
-  for(n in unique(clust.ids$id))
-  {
-    if(n != noise.clust.id){
-      cov.mat <- med.cov(expdata = expdata[which(clust.ids$id == n), markers], markers = markers, use.median = TRUE)
-
-      x <- mahalanobis(x=as.matrix(expdata[which(clust.ids$id == n),markers]), center=clust.meds[n, markers],
-                       cov = cov.mat, inverted = TRUE, tol=1e-22)
-
-      x <- data.frame(dist = x, clust.id = n)
-      m.dists <- rbind(m.dists, x)
-    }
-  }
-  cat("Reclassifying Final Outliers\n")
-  # reclassify all points not passing mahalanobis threshold as noise
-  clust.ids[which(rownames(clust.ids) %in% rownames(m.dists[which(m.dists$dist >= dist.thresh),])),1] <- noise.clust.id
-  # reclassify clusters which are now too small to pass min points threshold
-  clust.freqs <- as.data.frame(table(clust.ids$id), stringsAsFactors = F)
-  clust.freqs <- clust.freqs[which(clust.freqs$Freq <= minpts),]
-  clust.ids[which(clust.ids$id %in% clust.freqs$Var1),1] <- noise.clust.id
-
-  print(table(m.dists$dist >= dist.thresh))
-  print(table(clust.ids$id == noise.clust.id))
-
   return(clust.ids)
 }
