@@ -19,6 +19,14 @@ binclust.it <- function(expdata, markers, clust.col, noise.clust.id = "0", minpt
 
   ## TODO check split clusters for identity - if this makes identical or super close clusters, implement a cluster merging step.
 
+  # First find all clusters not passing minimum size and classify as noise.
+  clust.freqs <- as.data.frame(table(expdata[,clust.col]), stringsAsFactors=FALSE)
+  clust.freqs <- subset(clust.freqs, Freq < minpts)
+  for(i in 1:nrow(clust.freqs)){
+    expdata[which(expdata[,clust.col] == clust.freqs[i,"Var1"]), clust.col] <- noise.clust.id
+  }
+  rm(clust.freqs) # keep the env small.
+
   cat("Creating Binary Matrix\n")
   bin.mat <- sign(expdata[,markers])
 
@@ -27,6 +35,8 @@ binclust.it <- function(expdata, markers, clust.col, noise.clust.id = "0", minpt
 
   bin.mat <- apply(bin.mat, MARGIN = 2, function(x){as.integer(x)})
   rownames(bin.mat) <- row.ids
+  cat("\n", str(row.ids))
+  cat("\n", str(bin.mat))
 
   clust.ids <- data.frame(id=as.character(expdata[,clust.col]), stringsAsFactors = FALSE)
   rownames(clust.ids) <- row.ids
@@ -36,8 +46,7 @@ binclust.it <- function(expdata, markers, clust.col, noise.clust.id = "0", minpt
   cat("Running Initial Reclustering\n")
   # Reclustering loop
   for(n in unique(clust.ids$id)) {
-    cat("\n length row.ids ", length(row.ids[which(clust.ids$id == n)]))
-    cat("\n nrow binmat subset ", nrow(as.matrix(bin.mat[which(clust.ids$id == n),])))
+    cat("\n", n)
     clusts <- FACkit:::binclust2(binmat = as.matrix(bin.mat[which(clust.ids$id == n),]), rowids = as.character(row.ids[which(clust.ids$id == n)]))
 
     ## aggregate all clusters not passing min points threshold
