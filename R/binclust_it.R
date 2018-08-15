@@ -35,8 +35,6 @@ binclust.it <- function(expdata, markers, clust.col, noise.clust.id = "0", minpt
 
   bin.mat <- apply(bin.mat, MARGIN = 2, function(x){as.integer(x)})
   rownames(bin.mat) <- row.ids
-  cat("\n", str(row.ids))
-  cat("\n", str(bin.mat))
 
   clust.ids <- data.frame(id=as.character(expdata[,clust.col]), stringsAsFactors = FALSE)
   rownames(clust.ids) <- row.ids
@@ -46,7 +44,6 @@ binclust.it <- function(expdata, markers, clust.col, noise.clust.id = "0", minpt
   cat("Running Initial Reclustering\n")
   # Reclustering loop
   for(n in unique(clust.ids$id)) {
-    cat("\n", n)
     clusts <- FACkit:::binclust2(binmat = bin.mat[which(clust.ids$id == n),], rowids = row.ids[which(clust.ids$id == n)])
 
     ## aggregate all clusters not passing min points threshold
@@ -104,7 +101,6 @@ binclust.it <- function(expdata, markers, clust.col, noise.clust.id = "0", minpt
   # Calc mahalanobis dist of noise point to each cluster
   ## TODO this is a bottleneck - can be quite slow... fix by either writing maha function in cpp or trying mvnfast::maha (latter did not work for main part)
   for(n in unique(clust.ids[which(clust.ids$id != noise.clust.id),"id"])){
-    cat("\n", n)
     cov.mat <- med.cov(expdata = expdata[which(clust.ids$id == n), markers], markers = markers, use.median = TRUE)
 
     x <- mahalanobis(x = expdata[which(rownames(expdata) %in% rownames(noise)), markers],
@@ -118,7 +114,6 @@ binclust.it <- function(expdata, markers, clust.col, noise.clust.id = "0", minpt
   # Reclassify the clust ids
   noise.pts <- unique(m.dists$noise.pt)
   for(n in 1:length(noise.pts)){
-    cat("\n", noise.pts[n])
     current.point <- subset(m.dists, noise.pt == noise.pts[n])
     clust.ids[which(rownames(clust.ids) == noise.pts[n]),"id"] <- current.point[which(current.point$dist == min(current.point$dist)), "clust.id"]
     #clust.ids[which(rownames(clust.ids) == noise.pts[n]),"id"] <- m.dists[which(m.dists$dist == min(m.dists[which(m.dists$noise.pt == noise.pts[n]),"dist"])),"clust.id"]
