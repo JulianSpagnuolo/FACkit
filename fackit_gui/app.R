@@ -2,6 +2,7 @@ library(shiny)
 library(shinydashboard)
 library(shinyjs)
 library(shinyFiles)
+library(shinyFeedback)
 library(data.table)
 library(DT)
 library(stringr)
@@ -54,7 +55,7 @@ ui <- dashboardPage(skin = "blue",
                                                  downloadButton(outputId = "fackit.download", label="Download Data", icon=icon("download", lib="font-awesome")) # TODO centre the button in the sidebar, make it pretty!
                                                  )
                     ),
-                    dashboardBody(
+                    dashboardBody(useShinyFeedback(),
                       tabItems(
                         tabItem(tabName = "home",
                                 fluidRow(
@@ -82,7 +83,7 @@ ui <- dashboardPage(skin = "blue",
 
                                 fluidRow(
                                   box(
-                                    actionButton(inputId = "upload", label = "Upload Data", icon = icon("upload", lib="font-awesome"))
+                                    actionButton(inputId = "upload", label = "Upload Data", icon = icon("upload", lib="font-awesome")), snackbar("upload.verb", message = "Data has been uploaded!")
                                     )
                                   )
                         ),
@@ -110,7 +111,7 @@ ui <- dashboardPage(skin = "blue",
                                              numericInput(inputId = "asincofac", label = h5("Arc Sin Cofactor"), value = 25, min=0, max = Inf,width = "25%")
                                              ),
                                       column(width = 6,
-                                             actionButton("transform", label = "Apply Transformation", icon = icon("ok",lib="glyphicon"))
+                                             actionButton("transform", label = "Apply Transformation", icon = icon("ok",lib="glyphicon")), snackbar("transform.verb", message = "Data is Uploaded!")
                                              )
                                       )
                                 ),
@@ -134,7 +135,7 @@ ui <- dashboardPage(skin = "blue",
                                       fluidRow(
                                         column(width = 6,
                                                uiOutput("mem.groups"),
-                                               actionButton("run.mem", label="Run", icon = icon("magic", lib="font-awesome"))
+                                               actionButton("run.mem", label="Run", icon = icon("magic", lib="font-awesome")), snackbar("run.mem.verb", "Running MEM Analysis... be patient!")
                                                ),
                                         column(width = 6,
                                                numericInput("mem.iqr", label = "IQR Threshold", value = NULL, width = "25%"))
@@ -164,7 +165,7 @@ ui <- dashboardPage(skin = "blue",
                                                ),
                                              fluidRow(
                                                column(width=6,
-                                                      actionButton("db.knn.run", label = "Run DBScan kNN dist", icon=icon("magic")))
+                                                      actionButton("db.knn.run", label = "Run DBScan kNN dist", icon=icon("magic"))), snackbar("db.knn.run.verb", "Running DBScan kNN... be patient!")
                                              )
                                          ),
                                          box(plotOutput("db.knn.plot"), width = 12)
@@ -178,7 +179,7 @@ ui <- dashboardPage(skin = "blue",
                                              numericInput("db.opt.eps.start", label="Epsilon Start", min = 0, value = 0.01, width="50%"),
                                              numericInput("db.opt.eps.step", label="Epsilon Step Size", min = 0, value = 0.001, step = 0.001, width="50%"),
                                              numericInput("db.opt.mpts.start", label = "Min Points Start", min = 1, value = 3, step = 1, width="50%"),
-                                             actionButton("db.opt.run", label = "Run", icon = icon("magic", lib="font-awesome"))
+                                             actionButton("db.opt.run", label = "Run", icon = icon("magic", lib="font-awesome")), snackbar("db.opt.run.verb", "Scanning Through DBScan Parameter ... be patient!")
                                       ),
                                       column(width = 6,
                                              numericInput("db.opt.eps.end", label="Epsilon End", min = 0, value = 0.04, width="50%"),
@@ -191,7 +192,7 @@ ui <- dashboardPage(skin = "blue",
                                   box(title = "Final DBscan Parameters", width=12,
                                       column(width = 6,
                                              numericInput("db.eps", value = 0, min = 0, label = "Epsilon", width="25%"),
-                                             actionButton("db.scan.run", label = "Run", icon = icon("magic", lib="font-awesome"))
+                                             actionButton("db.scan.run", label = "Run", icon = icon("magic", lib="font-awesome")), snackbar("db.scan.run.verb", "Running DBScan Clustering!")
                                              ),
                                       column(width = 6,
                                              numericInput("db.mpts", value = 0, min = 0, label = "Min Pts", width="25%")
@@ -214,7 +215,7 @@ ui <- dashboardPage(skin = "blue",
                                       numericInput(inputId = "reclust.minpts", label = "Minimum Cluster Membership", value = 4, min = 1, step = 1),
                                       numericInput(inputId = "reclust.alpha", label = "Significance Level for Critical Chi-square Cutoff", value = 0.001, min = 0, max = 1, step = 1),
                                       numericInput(inputId = "reclust.iter", label = "Reclustering Iterations", value = 5, min = 1, step = 1),
-                                      actionButton(inputId = "reclust.run", label="Run", icon = icon("magic", lib="font-awesome")))
+                                      actionButton(inputId = "reclust.run", label="Run", icon = icon("magic", lib="font-awesome"))), snackbar("reclust.run.verb", "Running Binclust ... this may take a while, go have a coffee")
                                 ),
                                 fluidRow(
                                   column(width = 6,
@@ -235,7 +236,7 @@ ui <- dashboardPage(skin = "blue",
                                                              label = "Use Equal Proportions for Category Enrichment?")),
                                         column(width = 6,
                                                uiOutput("enrich.category"),
-                                               actionButton(inputId = "enrich.run", label = "Run", icon=icon("magic", lib="font-awesome")))
+                                               actionButton(inputId = "enrich.run", label = "Run", icon=icon("magic", lib="font-awesome"))), snackbar("enrich.run.verb", "Running Enrichment Analysis ... be patient")
                                     )
                                   )
                                 )
@@ -417,6 +418,7 @@ server <- function(input, output, session) {
                       selected = as.vector(expdata[["markers.raw"]])[1])
 
     expdata$cutoffs <- matrix(nrow=1, ncol = length(as.vector(expdata[["markers.raw"]])), dimnames=list(c(1),c(as.vector(expdata[["markers.raw"]]))))
+    showSnackbar("upload.verb")
   })
 
 
@@ -462,6 +464,7 @@ server <- function(input, output, session) {
     rownames(norm.data) <- 1:nrow(norm.data)
     expdata$norm.data <- norm.data
     expdata$bin.defs <- matrix(nrow=2, ncol=length(expdata[["markers.raw"]]), dimnames = list(c("pos","neg"),c(expdata[["markers.raw"]])))
+    showSnackbar("transform.verb")
   })
 
   ## Check Transformed Data
@@ -508,6 +511,7 @@ server <- function(input, output, session) {
 
   # Run MEM and plot
   observeEvent(input$run.mem, {
+    showSnackbar("run.mem.verb")
     c("formatting data for MEM") %>% print
 
     ## BUG this now fails if there is only a single Cond column.
@@ -555,7 +559,7 @@ server <- function(input, output, session) {
         numericInput(inputId = "tsne.start.late.exag", label="Start Late Exag. At Iter:", value = -1, min = -1, step=1, width="25%"),
         numericInput(inputId = "tsne.late.exag", label="Late Exagg. Coefficient", value = 1.0, min = 0, step=0.5, width="25%"),
         numericInput(inputId = "seed", label="System Seed", value = 42, min = 0, step=1, width="25%"),
-        actionButton(inputId = "run.tsne", label = "Run tSNE", icon = icon("magic", lib="font-awesome")), width=12
+        actionButton(inputId = "run.tsne", label = "Run tSNE", icon = icon("magic", lib="font-awesome")), width=12, snackbar("run.tsne.verb", "Running tSNE ... be patient!")
       )
 
     }else{
@@ -569,13 +573,14 @@ server <- function(input, output, session) {
         numericInput(inputId = "tsne.stop.lying.iter", label="Early Exagg. Phase End", value = 250, min = 1, step=1, width="25%"),
         numericInput(inputId = "tsne.early.exag", label="Early Exagg. Coefficient", value = 12.0, min = 0, step=0.5, width="25%"),
         numericInput(inputId = "seed", label="System Seed", value = 42, min = 0, step=1, width="25%"),
-        actionButton(inputId = "run.tsne", label = "Run tSNE", icon = icon("magic", lib="font-awesome"))
+        actionButton(inputId = "run.tsne", label = "Run tSNE", icon = icon("magic", lib="font-awesome")), snackbar("run.tsne.verb", message = "Running tSNE ... be patient")
       )
 
     }
   })
 
   observeEvent(input$run.tsne,{
+    showSnackbar("run.tsne.verb")
     expdata$tsne.markers <- input$tsne.markers
 
     set.seed(input$seed)
@@ -648,12 +653,14 @@ server <- function(input, output, session) {
   })
 
   observeEvent(input$db.knn.run, {
+    showSnackbar("db.knn.run.verb")
     output$db.knn.plot <- renderPlot({
       kNNdistplot(x = expdata[[input$db.tsne.dim]], k = 4)
     })
   })
 
   observeEvent(input$db.opt.run, {
+    showSnackbar("db.opt.run.verb")
     expdata$db.opt <- dbscan.opt(data = expdata[[input$db.tsne.dim]], eps.start = input$db.opt.eps.start, eps.end = input$db.opt.eps.end,
                                  step.size = input$db.opt.eps.step, minPts.start = input$db.opt.mpts.start, minPts.end = input$db.opt.mpts.end)
 
@@ -663,6 +670,7 @@ server <- function(input, output, session) {
   })
 
   observeEvent(input$db.scan.run, {
+    showSnackbar("db.scan.run.verb")
     expdata$dbscan <- dbscan(x=expdata[[input$db.tsne.dim]], eps = input$db.eps, minPts = input$db.mpts)
 
     # this just to make life a little easier later, not having to worry about factor weirdness.
@@ -712,6 +720,7 @@ server <- function(input, output, session) {
 
 
   observeEvent(input$reclust.run, {
+    showSnackbar("reclust.run.verb")
     ## TODO figure out what to do with the noise clusters in dbscan - need to recluster amongst the split clusts.
     c("Running binclust.it") %>% print
     expdata$split.merge <- binclust.it(expdata = cbind(expdata[["norm.data"]], data.frame(binclust = as.character(expdata[["dbscan"]]$cluster), stringsAsFactors = FALSE)),
@@ -785,6 +794,7 @@ server <- function(input, output, session) {
 
 
   observeEvent(input$enrich.run, {
+    showSnackbar("enrich.run.verb")
     input$enrich.category %>% print
     conds <- input$enrich.category
 

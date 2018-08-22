@@ -43,7 +43,7 @@ binclust.it <- function(expdata, markers, clust.col, noise.clust.id = "0", minpt
 
   cat("Running Initial Reclustering\n")
   # Reclustering loop
-  for(n in unique(clust.ids[which(clust.ids$id != noise.clust.id)]$id)) {
+  for(n in unique(clust.ids[which(clust.ids$id != noise.clust.id),"id"])) {
     clusts <- FACkit:::binclust2(binmat = bin.mat[which(clust.ids$id == n),], rowids = row.ids[which(clust.ids$id == n)])
 
     ## aggregate all clusters not passing min points threshold
