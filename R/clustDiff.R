@@ -12,9 +12,6 @@ clust.diff <- function(data, markers, cluster.id,test.method="Chisq", p.adj=TRUE
   #'
   #'
   #' @export
-  #'
-  #'
-  #'
 
   # create 3D array for results of dimensions length(clusters)*length(clusters)*length(markers)
   tests <- array(dim = c(length(data[,cluster.id]),length(data[,cluster.id]),length(markers)),

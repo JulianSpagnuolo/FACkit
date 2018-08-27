@@ -1,6 +1,5 @@
 #' FACkit GUI
 #'
-#' @return
 #' @export
 #'
 #'

@@ -52,7 +52,7 @@ som.tree <- function(data, markers, shape=c("rect","hex"), maxit=500, cores=1, a
     if(is.null(dim))
     {
       cat("You MUST define dim parameter for kohonen algorithm!!\n")
-      break
+      stop()
     }
     results$algorithm <- "kohonen"
     t1 <- Sys.time()
