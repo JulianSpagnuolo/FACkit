@@ -34,8 +34,7 @@ if(length(find.package("fftRtsne", quiet = T)) != 0){
 }else{
   library(Rtsne)
 }
-find.package("FACkit")
-source("~/Documents/Rproj/fackit/fackit_gui/enrichTest-module.R")
+source(system.file("fackit_gui", "enrichTest-module.R", package = "FACkit"))
 
 ## TODO Make the layout pretty with shinydashboards.
 ## TODO Add documentation guides in the boxes
