@@ -1,5 +1,5 @@
 nodeSize <- function(somtree, reset=FALSE, maxNodeSize=0.1)
-  #'
+{
   #' @title Scaled Node Sizes for growing SOM
   #' @author Julian Spagnuolo
   #' @description calcs size of nodes for som tree
@@ -14,7 +14,6 @@ nodeSize <- function(somtree, reset=FALSE, maxNodeSize=0.1)
   #'
   #'
   #'
-{
   if(somtree$algorithm == "GrowSOM")
   {
     if(reset == TRUE)
