@@ -58,7 +58,7 @@ ui <- dashboardPage(skin = "blue",
                       tabItems(
                         tabItem(tabName = "home",
                                 fluidRow(
-                                  #includeMarkdown(path="front_page_notes.md") ## insert into main panel for documentation
+                                  includeMarkdown(path="front_page_notes.md")
                                 )
                         ),
                         tabItem(tabName = "data_import",
