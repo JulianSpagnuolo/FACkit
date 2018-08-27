@@ -3,7 +3,6 @@ Type: Package
 Title: FACS Analysis Tool Kit
 Version: 0.1.0
 Author: Julian Spagnuolo
-Date: 2017
 Maintainer: Julian Spagnuolo <julianspagnuolo@gmail.com>
 Description: A flexible FACS analysis toolkit providing clustering, exploration and differential expression analysis pipelines. A shiny based GUI is also provided.
     Use four spaces when indenting paragraphs within the Description.

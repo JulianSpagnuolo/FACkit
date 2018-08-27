@@ -58,7 +58,7 @@ ui <- dashboardPage(skin = "blue",
                       tabItems(
                         tabItem(tabName = "home",
                                 fluidRow(
-                                  includeMarkdown(path="front_page_notes.md")
+                                  includeMarkdown(system.file("fackit_gui", "front_page_notes.md", package = "FACkit"))
                                 )
                         ),
                         tabItem(tabName = "data_import",
