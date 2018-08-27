@@ -29,24 +29,6 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// bingrow
-NumericMatrix bingrow(double dthresh, int minpts, NumericMatrix data, int lmarkers, NumericMatrix oldbins, Rcpp::List ndist, Rcpp::List nlist, int growfact);
-RcppExport SEXP _FACkit_bingrow(SEXP dthreshSEXP, SEXP minptsSEXP, SEXP dataSEXP, SEXP lmarkersSEXP, SEXP oldbinsSEXP, SEXP ndistSEXP, SEXP nlistSEXP, SEXP growfactSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< double >::type dthresh(dthreshSEXP);
-    Rcpp::traits::input_parameter< int >::type minpts(minptsSEXP);
-    Rcpp::traits::input_parameter< NumericMatrix >::type data(dataSEXP);
-    Rcpp::traits::input_parameter< int >::type lmarkers(lmarkersSEXP);
-    Rcpp::traits::input_parameter< NumericMatrix >::type oldbins(oldbinsSEXP);
-    Rcpp::traits::input_parameter< Rcpp::List >::type ndist(ndistSEXP);
-    Rcpp::traits::input_parameter< Rcpp::List >::type nlist(nlistSEXP);
-    Rcpp::traits::input_parameter< int >::type growfact(growfactSEXP);
-    rcpp_result_gen = Rcpp::wrap(bingrow(dthresh, minpts, data, lmarkers, oldbins, ndist, nlist, growfact));
-    return rcpp_result_gen;
-END_RCPP
-}
 // snlocation
 NumericVector snlocation(std::vector<double> markdat);
 RcppExport SEXP _FACkit_snlocation(SEXP markdatSEXP) {
@@ -62,7 +44,6 @@ END_RCPP
 static const R_CallMethodDef CallEntries[] = {
     {"_FACkit_binclust2", (DL_FUNC) &_FACkit_binclust2, 2},
     {"_FACkit_bindist", (DL_FUNC) &_FACkit_bindist, 2},
-    {"_FACkit_bingrow", (DL_FUNC) &_FACkit_bingrow, 8},
     {"_FACkit_snlocation", (DL_FUNC) &_FACkit_snlocation, 1},
     {NULL, NULL, 0}
 };

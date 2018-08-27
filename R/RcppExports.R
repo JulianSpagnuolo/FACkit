@@ -15,10 +15,6 @@ bindist <- function(binmat, data) {
     .Call('_FACkit_bindist', PACKAGE = 'FACkit', binmat, data)
 }
 
-bingrow <- function(dthresh, minpts, data, lmarkers, oldbins, ndist, nlist, growfact) {
-    .Call('_FACkit_bingrow', PACKAGE = 'FACkit', dthresh, minpts, data, lmarkers, oldbins, ndist, nlist, growfact)
-}
-
 #' Location of Skew Normal Distribution
 #' @export
 NULL
