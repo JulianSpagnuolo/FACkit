@@ -83,8 +83,7 @@ enrichTest.module <- function(input, output, session, data, cats, clust.col, tsn
   })
 
   ## TODO customise the filtering and layout options - dropbox for category column, numeric filtering for the pval, prop and FDR columns.
-  ## TODO change the output columns to use the rounded values outputted by the enrichTest function [,c("cluster","category","cluster.size","prop","bin.pval","bin.FDR)]
-  output$enrich.tab <- renderDT(enrichment.results()[,c("cluster","category","cluster.size","proportion","binomial.pval","binomial.FDR")], server = TRUE, options=list(digits=3, dom="ltip"))
+  output$enrich.tab <- renderDT(enrichment.results()[,c("cluster","category","cluster.size","prop","bin.pval","bin.FDR")], server = TRUE, options=list(digits=3, dom="ltip"))
 
   output$enrich.prop <- renderPlotly({
     if(is.null(input$enrich.tab_rows_selected)){return(NULL)}
