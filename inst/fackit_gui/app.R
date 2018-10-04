@@ -128,9 +128,8 @@ ui <- dashboardPage(skin = "blue",
                                 br(),
                                 h3("Marker Enrichment Modelling"),
                                 fluidRow(
-                                  box(width = 12,
-                                      h4("Set MEM Parameters"),
-                                      fluidRow(uiOutput("marker.select")), ## TODO this element needs to move right a bit.
+                                  box(width = 12, title = "Set MEM Parameters",
+                                      uiOutput("marker.select"),
                                       fluidRow(
                                         column(width = 6,
                                                uiOutput("mem.groups"),

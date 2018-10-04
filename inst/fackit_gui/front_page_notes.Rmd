@@ -2,20 +2,28 @@
 output: github_document
 ---
 
-<!-- README.md is generated from README.Rmd. Please edit that file -->
+<!-- front_page_notes.md is generated from front_page_notes.Rmd. Please edit that file -->
 
 ```{r, echo = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
-  fig.path = "README-"
+  fig.path = "fpn-"
 )
 ```
 
 
 # FACkit GUI
 
-Running FACkit version `r packageVersion("FACkit")`
+Running `r packageDescription("FACkit", fields="Package")`, a `r packageDescription("FACkit", fields="Title")`, version `r packageVersion("FACkit")` developed by `r packageDescription("FACkit", fields="Author")`. 
+
+## Introduction
+
+This GUI was developed to enable intuitive and streamlined exploration and analysis of high-dimension FACS data using tSNE.
+
+Documentation and explanation of the tools and steps used are either located beside each box or can be accessed by clicking "help" buttons.
+
+In the event of crashes or unexpected behaviour please contact the package developer; `r packageDescription("FACkit", fields="Maintainer")`.
 
 # VERSION NEWS
 
