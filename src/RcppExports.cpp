@@ -29,22 +29,10 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// snlocation
-NumericVector snlocation(std::vector<double> markdat);
-RcppExport SEXP _FACkit_snlocation(SEXP markdatSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< std::vector<double> >::type markdat(markdatSEXP);
-    rcpp_result_gen = Rcpp::wrap(snlocation(markdat));
-    return rcpp_result_gen;
-END_RCPP
-}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_FACkit_binclust2", (DL_FUNC) &_FACkit_binclust2, 2},
     {"_FACkit_bindist", (DL_FUNC) &_FACkit_bindist, 2},
-    {"_FACkit_snlocation", (DL_FUNC) &_FACkit_snlocation, 1},
     {NULL, NULL, 0}
 };
 

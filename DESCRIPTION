@@ -13,4 +13,4 @@ Imports: KernSmooth,EMMIXskew,psych,igraph,kohonen,Rcpp
 Recommends: ggplot,ggsci,ggalt,FlowSOM,pals
 Depends: KernSmooth,EMMIXskew,psych,amap,igraph,kohonen,dbscan,gtools,vipor, BH, Rcpp
 LinkingTo: Rcpp, BH
-RoxygenNote: 6.1.0
+RoxygenNote: 6.1.1

@@ -9,7 +9,7 @@ library(stringr)
 library(dplyr)
 
 library(ggplot2)
-library(ggalt)
+#library(ggalt)
 library(ggbeeswarm)
 library(gridExtra)
 library(pals)
@@ -177,7 +177,7 @@ ui <- dashboardPage(skin = "blue",
                                              numericInput("db.opt.eps.start", label="Epsilon Start", min = 0, value = 0.01, width="50%"),
                                              numericInput("db.opt.eps.step", label="Epsilon Step Size", min = 0, value = 0.001, step = 0.001, width="50%"),
                                              numericInput("db.opt.mpts.start", label = "Min Points Start", min = 1, value = 3, step = 1, width="50%"),
-                                             actionButton("db.opt.run", label = "Run", icon = icon("magic", lib="font-awesome")), snackbar("db.optrunverb", "Scanning Through DBScan Parameter ... be patient!")
+                                             actionButton("db.opt.run", label = "Run", icon = icon("magic", lib="font-awesome")), snackbar("dboptrunverb", "Scanning Through DBScan Parameter ... be patient!")
                                       ),
                                       column(width = 6,
                                              numericInput("db.opt.eps.end", label="Epsilon End", min = 0, value = 0.04, width="50%"),
@@ -190,7 +190,7 @@ ui <- dashboardPage(skin = "blue",
                                   box(title = "Final DBscan Parameters", width=12,
                                       column(width = 6,
                                              numericInput("db.eps", value = 0, min = 0, label = "Epsilon", width="25%"),
-                                             actionButton("db.scan.run", label = "Run", icon = icon("magic", lib="font-awesome")), snackbar("db.scanrunverb", "Running DBScan Clustering!")
+                                             actionButton("db.scan.run", label = "Run", icon = icon("magic", lib="font-awesome")), snackbar("dbscanrunverb", "Running DBScan Clustering!")
                                              ),
                                       column(width = 6,
                                              numericInput("db.mpts", value = 0, min = 0, label = "Min Pts", width="25%")
@@ -246,6 +246,7 @@ ui <- dashboardPage(skin = "blue",
 
 
 server <- function(input, output, session) {
+  options(shiny.maxRequestSize=100*1024^2)
   # TODO Modularise the shiny app.
   data.folder <- reactiveValues()
   expdata <- reactiveValues()
@@ -432,7 +433,7 @@ server <- function(input, output, session) {
     data.folder[["cut"]] <- 0
   })
   output$raw.dist <- renderPlot({
-    ggplot(expdata[["raw.data"]], aes_string(x=input$raw.dist.marker)) +geom_bkde() +geom_vline(xintercept=as.vector(data.folder[["cut"]]), colour="red") +scale_x_continuous(limits=input$raw.dist.range)
+    ggplot(expdata[["raw.data"]], aes_string(x=input$raw.dist.marker)) +geom_density() +geom_vline(xintercept=as.vector(data.folder[["cut"]]), colour="red") +scale_x_continuous(limits=input$raw.dist.range)
   })
 
   ## Define Cutoff Value from Plot
@@ -468,9 +469,9 @@ server <- function(input, output, session) {
   ## Check Transformed Data
   output$norm.dist <- renderPlot({
     if(!is.numeric(expdata[["bin.defs"]][,input$norm.dist.marker])){
-      ggplot(expdata[["norm.data"]], aes_string(x=input$norm.dist.marker)) +geom_bkde()
+      ggplot(expdata[["norm.data"]], aes_string(x=input$norm.dist.marker)) +geom_density()
     }else{
-      ggplot(expdata[["norm.data"]], aes_string(x=input$norm.dist.marker)) +geom_bkde() +geom_vline(xintercept = expdata[["bin.defs"]][,input$norm.dist.marker], colour=c("red","red"))
+      ggplot(expdata[["norm.data"]], aes_string(x=input$norm.dist.marker)) +geom_density() +geom_vline(xintercept = expdata[["bin.defs"]][,input$norm.dist.marker], colour=c("red","red"))
     }
 
   })
@@ -557,7 +558,7 @@ server <- function(input, output, session) {
         numericInput(inputId = "tsne.start.late.exag", label="Start Late Exag. At Iter:", value = -1, min = -1, step=1, width="25%"),
         numericInput(inputId = "tsne.late.exag", label="Late Exagg. Coefficient", value = 1.0, min = 0, step=0.5, width="25%"),
         numericInput(inputId = "seed", label="System Seed", value = 42, min = 0, step=1, width="25%"),
-        actionButton(inputId = "run.tsne", label = "Run tSNE", icon = icon("magic", lib="font-awesome")), width=12, snackbar("run.tsneverb", "Running tSNE ... be patient!")
+        actionButton(inputId = "run.tsne", label = "Run tSNE", icon = icon("magic", lib="font-awesome")), width=12, snackbar("runtsneverb", "Running tSNE ... be patient!")
       )
 
     }else{
@@ -571,14 +572,14 @@ server <- function(input, output, session) {
         numericInput(inputId = "tsne.stop.lying.iter", label="Early Exagg. Phase End", value = 250, min = 1, step=1, width="25%"),
         numericInput(inputId = "tsne.early.exag", label="Early Exagg. Coefficient", value = 12.0, min = 0, step=0.5, width="25%"),
         numericInput(inputId = "seed", label="System Seed", value = 42, min = 0, step=1, width="25%"),
-        actionButton(inputId = "run.tsne", label = "Run tSNE", icon = icon("magic", lib="font-awesome")), snackbar("run.tsneverb", message = "Running tSNE ... be patient")
+        actionButton(inputId = "run.tsne", label = "Run tSNE", icon = icon("magic", lib="font-awesome")), snackbar("runtsneverb", message = "Running tSNE ... be patient")
       )
 
     }
   })
 
   observeEvent(input$run.tsne,{
-    showSnackbar("run.tsneverb")
+    showSnackbar("runtsneverb")
     expdata$tsne.markers <- input$tsne.markers
 
     set.seed(input$seed)
@@ -658,7 +659,7 @@ server <- function(input, output, session) {
   })
 
   observeEvent(input$db.opt.run, {
-    showSnackbar("db.optrunverb")
+    showSnackbar("dboptrunverb")
     expdata$db.opt <- dbscan.opt(data = expdata[[input$db.tsne.dim]], eps.start = input$db.opt.eps.start, eps.end = input$db.opt.eps.end,
                                  step.size = input$db.opt.eps.step, minPts.start = input$db.opt.mpts.start, minPts.end = input$db.opt.mpts.end)
 
@@ -668,7 +669,7 @@ server <- function(input, output, session) {
   })
 
   observeEvent(input$db.scan.run, {
-    showSnackbar("db.scanrunverb")
+    showSnackbar("dbscanrunverb")
     expdata$dbscan <- dbscan(x=expdata[[input$db.tsne.dim]], eps = input$db.eps, minPts = input$db.mpts)
 
     # this just to make life a little easier later, not having to worry about factor weirdness.

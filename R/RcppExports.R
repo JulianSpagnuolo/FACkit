@@ -15,11 +15,3 @@ bindist <- function(binmat, data) {
     .Call('_FACkit_bindist', PACKAGE = 'FACkit', binmat, data)
 }
 
-#' Location of Skew Normal Distribution
-#' @export
-NULL
-
-snlocation <- function(markdat) {
-    .Call('_FACkit_snlocation', PACKAGE = 'FACkit', markdat)
-}
-
