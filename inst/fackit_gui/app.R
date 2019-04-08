@@ -307,7 +307,7 @@ server <- function(input, output, session) {
     }
     if(length(unique(unlist(lapply(header, length)))) == 1)
     {
-      col.names  <- as.data.frame(matrix(nrow=length(path), ncol=length(header[[1]]), data=unlist(header), byrow=TRUE), stringsAsFactors=FALSE)
+      col.names  <- as.data.frame(matrix(nrow=length(path), ncol=length(header[[1]]), data=saneMarkers(markers = unlist(header)), byrow=TRUE), stringsAsFactors=FALSE)
     }
     else{
       col.names <- matrix(nrow=length(path), ncol=max(unlist(lapply(header, length))))
@@ -315,10 +315,10 @@ server <- function(input, output, session) {
       {
         if(length(header[[i]]) == ncol(col.names))
         {
-          col.names[i,] <- header[[i]]
+          col.names[i,] <- saneMarkers(markers = header[[i]])
         }
         else{
-          col.names[i,] <- c(header[[i]], rep(NA, ncol(col.names)-length(header[[i]])))
+          col.names[i,] <- c(saneMarkers(markers = header[[i]]), rep(NA, ncol(col.names)-length(header[[i]])))
         }
       }
       col.names <- as.data.frame(col.names, stringsAsFactors = FALSE)

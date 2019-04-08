@@ -1,3 +1,8 @@
+# FACkit 0.1.2
+
+* Added Marker name sanitizing function to the shiny app
+* Removed the `NEWS.md` file integration (it wasn't working)
+
 # FACkit 0.1.1
 
 * Increased App Upload Limit to 100 Mb
