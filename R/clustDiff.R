@@ -5,9 +5,9 @@ clust.diff <- function(data, markers, cluster.id,test.method="Chisq", p.adj=TRUE
   #' @param data data.frame of observations, column names must match names in markers
   #' @param markers character vector, length must match number of columns in data
   #' @param cluster.id character vector of length 1 matching the name of the column in data corresponding to the numeric cluster.id vector.
-  #' @param test.method Character vector of length 1. Type of test to use in anova step. Default is "Chisq", see \link{\code{help("anova")}} for details.
+  #' @param test.method Character vector of length 1. Type of test to use in anova step. Default is "Chisq", see anova functionfor details.
   #' @param p.adj Logical. Whether to apply multiple testing correction or not. Default is TRUE.
-  #' @param padj.method Character vector of length 1. Method of multiple testing correction to apply. Default is "BH" for Benjamini-Hochberg/FDR method, see \code{\link{help("p.adjust")}} for other method.
+  #' @param padj.method Character vector of length 1. Method of multiple testing correction to apply. Default is "BH" for Benjamini-Hochberg/FDR method, see p.adjust function for other method.
   #'
   #'
   #'
