@@ -6,10 +6,10 @@ clust.medians <- function(x, markers, clust.col, noise.clust.id=NULL)
 
   if(!is.null(noise.clust.id))
   {
-    clusts <- unique(x[which(x[,clust.col] != noise.clust.id),clust.col])
+    clusts <- levels(x[which(x[,clust.col] != noise.clust.id),clust.col])
   }
   else{
-    clusts <- unique(x[,clust.col])
+    clusts <- levels(x[,clust.col])
   }
 
   clust.defs <- matrix(nrow=length(clusts), ncol=length(markers), dimnames = list(c(clusts), c(markers)))
