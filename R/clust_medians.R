@@ -4,6 +4,10 @@ clust.medians <- function(x, markers, clust.col, noise.clust.id=NULL)
   #' @author Julian Spagnuolo
   #' @export
 
+  if(!is.factor(x[,clust.col]))
+  {
+    x[,clust.col] <- as.factor(x[,clust.col])
+  }
   if(!is.null(noise.clust.id))
   {
     clusts <- levels(x[which(x[,clust.col] != noise.clust.id),clust.col])

@@ -3,7 +3,7 @@
 
 # FACkit GUI
 
-Running FACkit, a FACS Analysis Tool Kit, version 0.1.0 developed by
+Running FACkit, a FACS Analysis Tool Kit, version 0.1.2 developed by
 Julian Spagnuolo.
 
 ## Introduction
@@ -19,28 +19,18 @@ package developer; Julian Spagnuolo <julianspagnuolo@gmail.com>.
 
 # VERSION NEWS
 
-<!--html_preserve-->
+## FACkit 0.1.2
 
-<h1>
+  - Added Marker name sanitizing function to the shiny app
+  - Removed the `NEWS.md` file integration (it wasn’t working)
 
-FACkit 0.1.0
+## FACkit 0.1.1
 
-</h1>
+  - Increased App Upload Limit to 100 Mb
+  - Removed app loading of ggalt (for server purposes) and switched
+    instances of geom\_bkde to geom\_density
 
-<ul>
+## FACkit 0.1.0
 
-<li>
-
-Added a <code>NEWS.md</code> file to track changes to the package.
-
-</li>
-
-<li>
-
-Added documentation to FACkit GUI.
-
-</li>
-
-</ul>
-
-<!--/html_preserve-->
+  - Added a `NEWS.md` file to track changes to the package.
+  - Added documentation to FACkit GUI.

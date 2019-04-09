@@ -14,11 +14,11 @@ clust.diff(data, markers, cluster.id, test.method = "Chisq",
 
 \item{cluster.id}{character vector of length 1 matching the name of the column in data corresponding to the numeric cluster.id vector.}
 
-\item{test.method}{Character vector of length 1. Type of test to use in anova step. Default is "Chisq", see \link{\code{help("anova")}} for details.}
+\item{test.method}{Character vector of length 1. Type of test to use in anova step. Default is "Chisq", see anova functionfor details.}
 
 \item{p.adj}{Logical. Whether to apply multiple testing correction or not. Default is TRUE.}
 
-\item{padj.method}{Character vector of length 1. Method of multiple testing correction to apply. Default is "BH" for Benjamini-Hochberg/FDR method, see \code{\link{help("p.adjust")}} for other method.}
+\item{padj.method}{Character vector of length 1. Method of multiple testing correction to apply. Default is "BH" for Benjamini-Hochberg/FDR method, see p.adjust function for other method.}
 }
 \description{
 Cluster Diff

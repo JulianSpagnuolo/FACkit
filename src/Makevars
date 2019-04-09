@@ -1,0 +1,4 @@
+PKG_CXXFLAGS = -std=gnu++14
+
+###PKG_LIBS = $(BLAS_LIBS)
+##PKG_LIBS=$(LDFLAGS)
