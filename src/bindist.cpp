@@ -26,7 +26,7 @@ Rcpp::List bindist(NumericMatrix binmat, NumericMatrix data) {
         }
       else
         {
-          winners = nodes[which_min(dists)]; // get current inhabitants of winning node
+          winners = as<std::vector<int> >(nodes[which_min(dists)]); // get current inhabitants of winning node
           winners.push_back(i + 1); // append winner index to end of vector. i + 1 to correct for 0-indexing in cpp
           nodes[which_min(dists)] = winners; // replace winning node vector with updated vector
         }
@@ -37,7 +37,7 @@ Rcpp::List bindist(NumericMatrix binmat, NumericMatrix data) {
         }
       else
         {
-          windist = nodedist[which_min(dists)]; // repeat process to store the calculated distance
+          windist = as<std::vector<double> >(nodedist[which_min(dists)]); // repeat process to store the calculated distance
           windist.push_back(min(dists));
           nodedist[which_min(dists)] = windist;
         }
