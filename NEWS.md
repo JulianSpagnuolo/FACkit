@@ -2,6 +2,7 @@
 
 * Added Marker name sanitizing function to the shiny app
 * Removed the `NEWS.md` file integration (it wasn't working)
+* Explicit conversions between Rcpp::vector and std::vector in bindist.cpp to prevent overloaded "=".
 
 # FACkit 0.1.1
 
