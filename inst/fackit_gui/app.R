@@ -336,8 +336,27 @@ server <- function(input, output, session) {
   observeEvent(input$upload,{
     paths <- input$file1$datapath
 
+
     data.folder[["files"]] <- hot_to_r(input$table)
     data.folder[["col.names"]] <- hot_to_r(input$column.names)
+
+    for(i in 1:ncol(data.folder[["col.names"]]))
+    {
+      nameCheck <- data.folder[["col.names"]][,i]
+      nameCheck <- as.vector(str_split(nameCheck, pattern = "", simplify = T))
+      nameCheck <- gsub(x=nameCheck, pattern="[[:blank:]]", replacement = ".")
+      nameCheck[1] <- gsub(x=nameCheck[1], pattern="[[:punct:]]", replacement="")
+      nameCheck[length(nameCheck)] <- gsub(x=nameCheck[length(nameCheck)], pattern="[[:punct:]]", replacement="")
+      nameCheck <- nameCheck[which(nchar(nameCheck) != 0)]
+      if(!is.na(as.numeric(nameCheck)[1]))
+      {
+        data.folder[["col.names"]][,i] <- paste("X", data.folder[["col.names"]][,i], sep="")
+      }
+      else{
+        data.folder[["col.names"]][,i] <- paste(nameCheck, collapse="")
+      }
+    }
+    rm(nameCheck)
 
     # Create Matrix of Column Names if it was reduced to one row (b/c they were all the same)
     if(nrow(data.folder[["col.names"]]) == 1)
