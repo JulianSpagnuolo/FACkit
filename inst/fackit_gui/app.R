@@ -345,6 +345,7 @@ server <- function(input, output, session) {
       nameCheck <- data.folder[["col.names"]][,i]
       nameCheck <- as.vector(str_split(nameCheck, pattern = "", simplify = T))
       nameCheck <- gsub(x=nameCheck, pattern="[[:blank:]]", replacement = ".")
+      nameCheck <- gsub(x=nameCheck, pattern="[[:punct:]]", replacement=".")
       nameCheck[1] <- gsub(x=nameCheck[1], pattern="[[:punct:]]", replacement="")
       nameCheck[length(nameCheck)] <- gsub(x=nameCheck[length(nameCheck)], pattern="[[:punct:]]", replacement="")
       nameCheck <- nameCheck[which(nchar(nameCheck) != 0)]
