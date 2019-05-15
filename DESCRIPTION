@@ -1,7 +1,7 @@
 Package: FACkit
 Type: Package
 Title: FACS Analysis Tool Kit
-Version: 0.1.2
+Version: 0.1.3
 Author: Julian Spagnuolo
 Maintainer: Julian Spagnuolo <julianspagnuolo@gmail.com>
 Description: A flexible FACS analysis toolkit providing clustering, exploration and differential expression analysis pipelines. A shiny based GUI is also provided.
@@ -10,7 +10,9 @@ License: GNU version 3.0
 Encoding: UTF-8
 LazyData: true
 Imports: KernSmooth,EMMIXskew,psych,igraph,kohonen,Rcpp
-Recommends: ggplot,ggsci,ggalt,FlowSOM,pals
-Depends: KernSmooth,EMMIXskew,psych,amap,igraph,kohonen,dbscan,gtools,vipor, BH, Rcpp
+Recommends: ggplot2,ggsci,ggalt,FlowSOM,pals
+Depends: KernSmooth,EMMIXskew,psych,amap,igraph,kohonen,dbscan,gtools,vipor, BH, Rcpp, shiny, shinydashboard, shinyjs, shinyFiles, shinyFeedback,
+    data.table, DT, stringr, dplyr, ggplot2, ggalt, ggbeeswarm, gridExtra, pals, ggthemes, RcolorBrewer, vipor, plotly, pheatmap
 LinkingTo: Rcpp, BH
 RoxygenNote: 6.1.1
+

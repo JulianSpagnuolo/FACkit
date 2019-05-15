@@ -7,6 +7,7 @@ library(data.table)
 library(DT)
 library(stringr)
 library(dplyr)
+library(rhandsontable)
 
 library(ggplot2)
 #library(ggalt)
@@ -67,16 +68,16 @@ ui <- dashboardPage(skin = "blue",
                                              column(fileInput("file1", "Choose CSV File", multiple = TRUE,
                                                               accept = c("text/csv","text/comma-separated-values,text/plain",".csv")),
                                                     width=4),
-                                             column(numericInput(inputId="n.cond.cols", label="Number of Condition Columns", value=3, min=0, max=Inf, step=1, width="25%"),
+                                             column(textInput(inputId="n.cond.cols", label="Condition Column Names (space or ',' delimited)", value = NA, placeholder = NA),
                                                     width=8)
                                              )
                                 ),
                                 fluidRow(
                                   box(width = 12, title = h4("Add Conditional Data:"),
-                                      DTOutput("table")
+                                      rHandsontableOutput("table")
                                       ),
                                   box(width = 12, title = h4("Check Marker Names:"),
-                                      DTOutput("column.names")
+                                      rHandsontableOutput("column.names")
                                       )
                                   ),
 
@@ -100,7 +101,7 @@ ui <- dashboardPage(skin = "blue",
                                                          min = -100, max = 100, value = c(30,40)))),
                                 fluidRow(
                                   box(width = 12, title = h4("Cutoff Values"),
-                                      DTOutput("cutoffs")
+                                      rHandsontableOutput("cutoffs")
                                       )
                                   ),
                                 fluidRow(
@@ -263,37 +264,30 @@ server <- function(input, output, session) {
 
   # Add Conditional Columns
   observe({
-    ## TODO add method to give custom Cond column names
-    ## TODO add method to store cond column names (if present)
     ## TODO add method to add numeric/integer columns - auto detect entered data
     files <- input$file1$name
     if(is.null(files)){return(NULL)}
     n.cols <- input$n.cond.cols
-    if(n.cols > 0)
+    if(!is.na(n.cols))
     {
-      data.files <- matrix(nrow=length(files), ncol=1+n.cols,
-                           dimnames=list(c(1:length(files)), c("Data.Files",paste("Cond",1:n.cols, sep="."))))
+      n.cols <- str_split(n.cols, pattern="[[:punct:][:space:]]", simplify = T)
+      n.cols <- n.cols[which(nchar(n.cols) != 0)]
+      data.files <- matrix(nrow=length(files), ncol=1+length(n.cols),
+                           dimnames=list(c(1:length(files)), c("Data.Files",n.cols)))
     }
     else{
-      data.files <- matrix(nrow=length(files), ncol=1+n.cols,
-                           dimnames=list(c(1:length(files)), c("Data.Files")))
+      data.files <- matrix(nrow=length(files), ncol=1+length(n.cols),
+                           dimnames=list(c(1:length(files)), c("Data.Files",n.cols)))
     }
     data.files <- as.data.frame(data.files, stringsAsFactors=FALSE)
     data.files$Data.Files <- files
     data.files[] <- lapply(data.files, as.character)
     data.folder$files <- data.files
+
+    output$table <- renderRHandsontable( rhandsontable(data.folder[["files"]]) )
   })
 
-  output$table <- renderDT(data.folder[["files"]], editable = TRUE, selection = "none", server = TRUE, options=list(dom="ltip", paging=FALSE))
-  proxy = dataTableProxy("table")
-  observeEvent(input$table_cell_edit, {
-    info = input$table_cell_edit
-    i = info$row
-    j = info$col
-    v = info$value
-    data.folder[["files"]][i, j] <<- DT::coerceValue(v, data.folder[["files"]][i, j])
-    replaceData(proxy, data.folder[["files"]], resetPaging = FALSE)
-  })
+
 
 
   # Check Column Names
@@ -307,7 +301,7 @@ server <- function(input, output, session) {
     }
     if(length(unique(unlist(lapply(header, length)))) == 1)
     {
-      col.names  <- as.data.frame(matrix(nrow=length(path), ncol=length(header[[1]]), data=saneMarkers(markers = unlist(header)), byrow=TRUE), stringsAsFactors=FALSE)
+      col.names  <- as.data.frame(matrix(nrow=length(path), ncol=length(header[[1]]), data=unlist(header), byrow=TRUE), stringsAsFactors=FALSE)
     }
     else{
       col.names <- matrix(nrow=length(path), ncol=max(unlist(lapply(header, length))))
@@ -315,10 +309,10 @@ server <- function(input, output, session) {
       {
         if(length(header[[i]]) == ncol(col.names))
         {
-          col.names[i,] <- saneMarkers(markers = header[[i]])
+          col.names[i,] <- header[[i]]
         }
         else{
-          col.names[i,] <- c(saneMarkers(markers = header[[i]]), rep(NA, ncol(col.names)-length(header[[i]])))
+          col.names[i,] <- c(header[[i]], rep(NA, ncol(col.names)-length(header[[i]])))
         }
       }
       col.names <- as.data.frame(col.names, stringsAsFactors = FALSE)
@@ -331,22 +325,19 @@ server <- function(input, output, session) {
     data.folder$col.names <- col.names
 
     rm(col.names);rm(header)
+
+    output$column.names <- renderRHandsontable( rhandsontable(data.folder[["col.names"]]) )
   })
 
-  output$column.names <- renderDT(data.folder[["col.names"]], editable = TRUE, selection = "none", server = TRUE, options=list(dom="ltip", paging=FALSE))
-  proxy.cols = dataTableProxy("column.names")
-  observeEvent(input$column.names_cell_edit, {
-    info = input$column.names_cell_edit
-    i = info$row
-    j = info$col
-    v = info$value
-    data.folder[["col.names"]][i, j] <<- DT::coerceValue(v, data.folder[["col.names"]][i, j])
-    replaceData(proxy.cols, data.folder[["col.names"]], resetPaging = FALSE)
-  })
+
+
 
   ## Data Upload
   observeEvent(input$upload,{
     paths <- input$file1$datapath
+
+    data.folder[["files"]] <- hot_to_r(input$table)
+    data.folder[["col.names"]] <- hot_to_r(input$column.names)
 
     # Create Matrix of Column Names if it was reduced to one row (b/c they were all the same)
     if(nrow(data.folder[["col.names"]]) == 1)
@@ -362,17 +353,17 @@ server <- function(input, output, session) {
     else{
       column.names <- as.data.frame(data.folder[["col.names"]], stringsAsFactors=FALSE)
     }
-    n.cols <- input$n.cond.cols
+    n.cols <- str_split(input$n.cond.cols, pattern="[[:punct:][:space:]]", simplify = T)
+    n.cols <- n.cols[which(nchar(n.cols) != 0)]
     raw.data.list <- vector(length=length(paths), mode="list")
     metadata.list <- vector(length=length(paths), mode="list")
     for(i in 1:length(paths))
     {
-      raw.data <- fread(file = paths[i], col.names = as.character(column.names[i,]))
-      if(n.cols > 0)
+      raw.data <- fread(file = paths[i], col.names = as.character(column.names[i,]), data.table = F, stringsAsFactors = F)
+      if(length(n.cols) > 0)
       {
-        ## TODO make this function handle custom column names if present
-        metadata <- matrix(nrow=nrow(raw.data), ncol=n.cols,
-                           dimnames=list(c(1:nrow(raw.data)), c(paste("Cond",1:n.cols, sep="."))))
+        metadata <- matrix(nrow=nrow(raw.data), ncol=length(n.cols),
+                           dimnames=list(c(1:nrow(raw.data)), c(n.cols)))
         for(n in colnames(metadata))
         {
           metadata[,n] <- as.character(data.folder[["files"]][i,n])
@@ -383,7 +374,7 @@ server <- function(input, output, session) {
     }
     raw.data <- as.data.frame(do.call("rbind", raw.data.list), stringsAsFactors=FALSE)
     rownames(raw.data) <- 1:nrow(raw.data)
-    if(n.cols > 0)
+    if(length(n.cols) > 0)
     {
       metadata <- as.data.frame(do.call("rbind", metadata.list), stringsAsFactors=FALSE)
       rownames(metadata) <- 1:nrow(metadata)
@@ -416,7 +407,7 @@ server <- function(input, output, session) {
                       choices = as.vector(expdata[["markers.raw"]]),
                       selected = as.vector(expdata[["markers.raw"]])[1])
 
-    expdata$cutoffs <- matrix(nrow=1, ncol = length(as.vector(expdata[["markers.raw"]])), dimnames=list(c(1),c(as.vector(expdata[["markers.raw"]]))))
+    expdata$cutoffs <- matrix(data = as.numeric(rep(NA, length(as.vector(expdata[["markers.raw"]])))), nrow=1, ncol = length(as.vector(expdata[["markers.raw"]])), dimnames=list(c(1),c(as.vector(expdata[["markers.raw"]]))))
     showSnackbar("uploadverb")
   })
 
@@ -444,19 +435,11 @@ server <- function(input, output, session) {
 
   ## Define Cutoff Value by Manually Entering in DataTable
   ## TODO make this DT show only 3 sig figs.
-  output$cutoffs <- renderDT(expdata[["cutoffs"]], editable = TRUE, selection = "none", server = TRUE, options=list(dom="ltip", paging=FALSE, digits=3))
-  proxy.cols = dataTableProxy("cutoffs")
-  observeEvent(input$cutoffs_cell_edit, {
-    info = input$cutoffs_cell_edit
-    i = info$row
-    j = info$col
-    v = as.numeric(info$value)
-    expdata[["cutoffs"]][i, j] <<- DT::coerceValue(v, expdata[["cutoffs"]][i, j])
-    replaceData(proxy.cols, expdata[["cutoffs"]], resetPaging = FALSE)
-  })
+  output$cutoffs <- renderRHandsontable( rhandsontable( expdata[["cutoffs"]] ) )
 
   ## Run Transformation
   observeEvent(input$transform, {
+    expdata[["cutoffs"]] <- hot_to_r(input$cutoffs)
     norm.data <- facsnorm(x=expdata[["raw.data"]][,colnames(expdata[["cutoffs"]])], cutoffs = as.numeric(expdata[["cutoffs"]][1,]), asinCofac = input$asincofac, method = "arcsin")
 
     norm.data <- cbind(norm.data, expdata[["raw.data"]][,expdata[["metadata"]]])
