@@ -1,3 +1,8 @@
+# FACkit 0.1.3
+
+* Modified shiny app data input method to use rhandsontables instead of DT - much easier/quicker to input.
+
+
 # FACkit 0.1.2
 
 * Added Marker name sanitizing function to the shiny app
