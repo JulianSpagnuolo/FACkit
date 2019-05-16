@@ -12,7 +12,7 @@ LazyData: true
 Imports: KernSmooth,EMMIXskew,psych,igraph,kohonen,Rcpp
 Recommends: ggplot2,ggsci,ggalt,FlowSOM,pals
 Depends: KernSmooth,EMMIXskew,psych,amap,igraph,kohonen,dbscan,gtools,vipor, BH, Rcpp, shiny, shinydashboard, shinyjs, shinyFiles, shinyFeedback,
-    data.table, DT, stringr, dplyr, ggplot2, ggalt, ggbeeswarm, gridExtra, pals, ggthemes, RcolorBrewer, vipor, plotly, pheatmap
+    data.table, DT, stringr, dplyr, ggplot2, ggalt, ggbeeswarm, gridExtra, pals, ggthemes, RColorBrewer, vipor, plotly, pheatmap
 LinkingTo: Rcpp, BH
 RoxygenNote: 6.1.1
 
