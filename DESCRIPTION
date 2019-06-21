@@ -2,6 +2,7 @@ Package: FACkit
 Type: Package
 Title: FACS Analysis Tool Kit
 Version: 0.1.3
+Date: 2017-05-01
 Author: Julian Spagnuolo
 Maintainer: Julian Spagnuolo <julianspagnuolo@gmail.com>
 Description: A flexible FACS analysis toolkit providing clustering, exploration and differential expression analysis pipelines. A shiny based GUI is also provided.
