@@ -26,3 +26,12 @@ devtools::install_github("JulianSpagnuolo/FACkit")
 ```
 
 
+### Citation
+
+It is requested that users publishing or presenting work that utilise this package in part or wholey cite it using
+
+```{r, echo=FALSE}
+citation("FACkit")
+```
+
+
