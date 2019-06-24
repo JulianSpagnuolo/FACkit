@@ -37,6 +37,7 @@ if(length(find.package("fftRtsne", quiet = T)) != 0){
 }
 source(system.file("fackit_gui", "enrichTest-module.R", package = "FACkit"))
 
+
 ## TODO Make the layout pretty with shinydashboards.
 ## TODO Add documentation guides in the boxes
 ## TODO implement download of workspace
